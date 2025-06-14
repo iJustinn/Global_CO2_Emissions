@@ -6,12 +6,95 @@ author:
   - b
   - c
   - Ziheng Zhong
+thanks: "Code and data supporting this analysis is available at: [Link to repository](https://github.com/iJustinn/Global_CO2_Emissions.git)."
 date: today
 date-format: long
+abstract: ""
 format: pdf
 toc: true
 number-sections: true
+bibliography: references.bib
 ---
+
+```{r setup}
+#| include: false
+#| warning: false
+#| message: false
+
+# load library
+library(tidyverse)
+library(ggplot2)
+library(knitr)
+library(readr)
+library(dplyr)
+library(here)
+
+# load data
+raw_data <- read.csv(here("data", "owid-co2-data.csv"))
+
+# load model
+
+```
+
+\newpage
+
+# Introduction
+
+Climate change has become a critical global challenge, driven largely by rising carbon dioxide (CO$_2$) emissions from human activities. The Intergovernmental Panel on Climate Change (IPCC) warns that without immediate and deep emission reductions, the world is on track to exceed the Paris Agreement’s 1.5°C warming threshold, underscoring an urgent need to curb CO$_2$ from all sectors [@citeIPCC]. In this context, the United States – historically the single largest national source of CO$_2$ – plays a pivotal role. Cumulatively, the U.S. has emitted roughly 25% of all fossil-fuel CO$_2$ since the industrial era began [@citeOwid], and it remains one of the top annual emitters today. Understanding the trajectory of U.S. emissions, especially from major sectors like transportation, industry, and energy generation, is therefore of global importance for climate change mitigation.
+
+This project focuses on analyzing the effect of U.S. transportation, industry, and energy generation on CO$_2$ emissions from 1750 up to 2023. Using historical emissions data from the Our World in Data's dataset [@citeData], we examine how these three key sectors have contributed to national CO$_2$ output over time. The study not only reviews historical trends but also develops forecasts for future emissions, providing both a retrospective and forward-looking perspective on U.S. CO$_2$ emissions.
+
+The motivation for this research is grounded in climate and energy policy relevance. The chosen sectors – transportation, industrial production, and power generation – are the dominant sources of U.S. greenhouse gas emissions [@citeEnergyConsumption]. For example, in 2019 the transportation sector accounted for about 29% of U.S. CO$_2$-equivalent emissions, followed by electricity generation (∼25%) and industrial processes (∼23%) [@citeEnergyConsumption]. These activities collectively drive the bulk of national emissions, meaning any meaningful climate strategy must address each of them. Analyzing historical patterns in these sectors can reveal how past economic growth, technological changes, and policies (such as vehicle efficiency standards or power plant regulations) have impacted emissions. Moreover, forecasting future emissions is crucial for gauging progress toward sustainability goals. The U.S. has set ambitious targets under the Paris Agreement – pledging a 50–52% reduction in greenhouse gases by 2030 (from 2005 levels) and net-zero emissions by 2050 [@citeEnergyConsumption] – which heightens the real-world significance of this study. By projecting emissions trajectories, we can assess whether current trends align with these climate goals or if additional policy interventions may be required.
+
+The paper is structured as follows: @sec-method TBD, @sec-result TBD, @sec-discussion TBD.
+
+
+
+# Method {#sec-method}
+## Data
+
+```{r}
+#| label: tbl-summary
+#| echo: false
+#| warning: false
+#| message: false
+
+
+
+```
+
+
+## Model
+### Model 1
+
+
+
+### Model 2
+
+
+
+# Result {#sec-result}
+
+
+
+# Discussion {#sec-discussion}
+
+
+
+# Appendix
+## Project Code
+
+
+\newpage
+
+# References
+
+
+
+
+
+
+
 
 
 
