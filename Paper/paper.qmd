@@ -48,10 +48,11 @@ The motivation for this research is grounded in climate and energy policy releva
 
 The paper is structured as follows: @sec-method TBD, @sec-result TBD, @sec-discussion TBD.
 
-
-
 # Method {#sec-method}
+
 ## Data
+
+The primary dataset for this project is the Our World in Data $CO_2$ and Greenhouse Gas Emissions database (Ritchie, Rosado & Roser, 2023), which provides annual, country-level estimates of total, per-capita, and cumulative $CO_2$ emissions, as well as sectoral breakdowns (energy production, industrial processes, transportation, residential/commercial, and land-use) from 1750 through the most recent available year.
 
 ```{r}
 #| label: tbl-summary
@@ -59,43 +60,54 @@ The paper is structured as follows: @sec-method TBD, @sec-result TBD, @sec-discu
 #| warning: false
 #| message: false
 
+library(tidyverse)
+library(lubridate)
+library(forecast)
+library(astsa)
+library(ggplot2)
+library(gridExtra)
 
+co2 <- read_csv("../Data/owid-co2-data.csv")
+
+dim(co2)            # rows, columns
+names(co2)          # column names
+glimpse(co2)        # types & preview of each column
+
+# Filter for country == "USA"
+co2_us <- co2 %>%
+  filter(iso_code == "USA")
+
+# Inspect the result
+glimpse(co2_us)
+head(co2_us, 10)
 
 ```
 
+Our research mainly focus on the total $CO_2$ emission in the USA, we extract the following variables:\
+$\bullet$ trade_co2: Emissions embodied in international trade\
+$\bullet$ oil_co2: Emissions from oil consumption\
+$\bullet$ gas_co2: Emissions from natural gas consumption\
+$\bullet$ flaring_co2: Emissions from gas flaring\
+$\bullet$ coal_co2: Emissions from coal consumption\
+$\bullet$ cement_co2: Emissions from cement production\
+$\bullet$ consumption_co2: Emissions attributable to final consumption\
+$\bullet$ other_industry_co2: Emissions from other industrial processes\
+These predictors will serve in our egression model of total CO₂ emissions; any rows with missing values on these variables are omitted.
 
 ## Model
+
 ### Model 1
-
-
 
 ### Model 2
 
-
-
 # Result {#sec-result}
-
-
 
 # Discussion {#sec-discussion}
 
-
-
 # Appendix
-## Project Code
 
+## Project Code
 
 \newpage
 
 # References
-
-
-
-
-
-
-
-
-
-
-
