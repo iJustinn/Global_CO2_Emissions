@@ -23,14 +23,18 @@ bibliography: references.bib
 
 # load library
 library(tidyverse)
+library(lubridate)
+library(gridExtra)
+library(forecast)
 library(ggplot2)
 library(knitr)
 library(readr)
 library(dplyr)
+library(astsa)
 library(here)
 
 # load data
-raw_data <- read.csv(here("data", "owid-co2-data.csv"))
+co2 <- read.csv(here("data", "owid-co2-data.csv"))
 
 # load model
 
@@ -52,22 +56,13 @@ The paper is structured as follows: @sec-method TBD, @sec-result TBD, @sec-discu
 
 ## Data
 
-The primary dataset for this project is the Our World in Data $CO_2$ and Greenhouse Gas Emissions database (Ritchie, Rosado & Roser, 2023), which provides annual, country-level estimates of total, per-capita, and cumulative $CO_2$ emissions, as well as sectoral breakdowns (energy production, industrial processes, transportation, residential/commercial, and land-use) from 1750 through the most recent available year.
+The primary dataset for this project is the Our World in Data $CO_2$ and Greenhouse Gas Emissions database [@citeData], which provides annual, country-level estimates of total, per-capita, and cumulative $CO_2$ emissions, as well as sectoral breakdowns (energy production, industrial processes, transportation, residential/commercial, and land-use) from 1750 through the most recent available year.
 
 ```{r}
 #| label: tbl-summary
 #| echo: false
 #| warning: false
 #| message: false
-
-library(tidyverse)
-library(lubridate)
-library(forecast)
-library(astsa)
-library(ggplot2)
-library(gridExtra)
-
-co2 <- read_csv("../Data/owid-co2-data.csv")
 
 dim(co2)            # rows, columns
 names(co2)          # column names
