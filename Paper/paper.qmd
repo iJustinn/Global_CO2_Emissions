@@ -81,6 +81,21 @@ ggplot(data, aes(x = Date, y = Total_CO2_Emissions)) +
   ) +
   theme_minimal()
 
+# Zoom in on a shorter period to highlight seasonality, e.g. 2015–2020
+data_zoom <- data %>%
+  filter(Date >= as.Date("2015-01-01") & Date <= as.Date("2020-12-31"))
+
+# Plot the zoomed time series
+ggplot(data_zoom, aes(x = Date, y = Total_CO2_Emissions)) +
+  geom_line(size = 1) +
+  labs(
+    title = "Total CO2 Emissions (2015–2020)",
+    x     = "Date",
+    y     = "Total CO2 Emissions (million metric tons)"
+  ) +
+  theme_minimal() +
+  scale_x_date(date_breaks = "6 months", date_labels = "%Y-%m")  
+
 acf(
   data$Total_CO2_Emissions,
   main = "ACF of Total CO2 Emissions",
@@ -110,9 +125,15 @@ summary(model1)
 
 acf(resid(model1), main = "ACF of Residuals")
 pacf(resid(model1), main = "PACF of Residuals")
+
+
 ```
 
 ### Model 2
+
+```{r}
+forecast::auto.arima(resid(model1))
+```
 
 # Result {#sec-result}
 
