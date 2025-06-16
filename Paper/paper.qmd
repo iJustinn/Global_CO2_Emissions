@@ -87,7 +87,7 @@ $\bullet$ coal_co2: Emissions from coal consumption\
 $\bullet$ cement_co2: Emissions from cement production\
 $\bullet$ consumption_co2: Emissions attributable to final consumption\
 $\bullet$ other_industry_co2: Emissions from other industrial processes\
-These predictors will serve in our egression model of total CO₂ emissions; any rows with missing values on these variables are omitted.
+These predictors will serve in our regression model of total CO₂ emissions; any rows with missing values on these variables are omitted.
 
 ## Model
 
