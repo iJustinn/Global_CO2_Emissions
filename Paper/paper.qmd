@@ -81,11 +81,11 @@ ggplot(data, aes(x = Date, y = Total_CO2_Emissions)) +
   ) +
   theme_minimal()
 
-# Zoom in on a shorter period to highlight seasonality, e.g. 2015–2020
+
 data_zoom <- data %>%
   filter(Date >= as.Date("2015-01-01") & Date <= as.Date("2020-12-31"))
 
-# Plot the zoomed time series
+
 ggplot(data_zoom, aes(x = Date, y = Total_CO2_Emissions)) +
   geom_line(size = 1) +
   labs(
@@ -117,7 +117,7 @@ By observing the ACF plot, we can conclude that the total CO2 emission is non-st
 ```{r}
 model1 <- lm(
   Total_CO2_Emissions ~ . 
-    - Date - Year - Month,   # drop any time‐index cols
+    - Date - Year - Month,
   data = data
 )
 
