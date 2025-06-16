@@ -56,7 +56,7 @@ The paper is structured as follows: @sec-method TBD, @sec-result TBD, @sec-discu
 
 ## Data
 
-The primary dataset for this project is the Our World in Data $CO_2$ and Greenhouse Gas Emissions database [@citeData], which provides annual, country-level estimates of total, per-capita, and cumulative $CO_2$ emissions, as well as sectoral breakdowns (energy production, industrial processes, transportation, residential/commercial, and land-use) from 1750 through the most recent available year.
+The dataset is sourced from the the U.S. Energy Information Administration’s (EIA) Monthly Energy Review that issues detailed energy statistics, including production, consumption, trade, and emissions metrics. The Monthly Energy Review is released on the last workday of each month and contains preliminary data that are subject to revision in subsequent releases, as well as historical data that may be updated when source publications are revised. For this project, data were extracted for the period ranging from January 1973 to February 2025, with a total of 626 records at a monthly frequency. The EIA collects these data through standardized survey forms completed by energy industry participants, following review protocols approved every three years to ensure consistency and quality across reporting entities.
 
 ```{r}
 #| label: tbl-summary
@@ -64,34 +64,49 @@ The primary dataset for this project is the Our World in Data $CO_2$ and Greenho
 #| warning: false
 #| message: false
 
-dim(co2)            # rows, columns
-names(co2)          # column names
-glimpse(co2)        # types & preview of each column
+data <- read.csv("../Data/cleaned_data.csv")
 
-# Filter for country == "USA"
-co2_us <- co2 %>%
-  filter(iso_code == "USA")
 
-# Inspect the result
-glimpse(co2_us)
-head(co2_us, 10)
+data <- data %>%
+  mutate(
+    Date = as.Date(paste(Year, Month, "1", sep = "-"), format = "%Y-%m-%d")
+  )
 
+ggplot(data, aes(x = Date, y = Total_CO2_Emissions)) +
+  geom_line(size = 1) +
+  labs(
+    title = "Total CO2 Emissions Over Time",
+    x     = "Date",
+    y     = "Total CO2 Emissions (million metric tons)"
+  ) +
+  theme_minimal()
+
+acf(
+  data$Total_CO2_Emissions,
+  main = "ACF of Total CO2 Emissions",
+  xlab = "Lag",
+  ylab = "Autocorrelation"
+)
 ```
 
-Our research mainly focus on the total $CO_2$ emission in the USA, we extract the following variables:\
-$\bullet$ trade_co2: Emissions embodied in international trade\
-$\bullet$ oil_co2: Emissions from oil consumption\
-$\bullet$ gas_co2: Emissions from natural gas consumption\
-$\bullet$ flaring_co2: Emissions from gas flaring\
-$\bullet$ coal_co2: Emissions from coal consumption\
-$\bullet$ cement_co2: Emissions from cement production\
-$\bullet$ consumption_co2: Emissions attributable to final consumption\
-$\bullet$ other_industry_co2: Emissions from other industrial processes\
-These predictors will serve in our regression model of total CO₂ emissions; any rows with missing values on these variables are omitted.
+Key variables included in the cleaned dataset are total $CO_2$ emissions (million metric tons), transportation petroleum consumption (million barrels per day), total fossil fuels production and total renewable energy production (quadrillion British thermal units [Btu]), and sectoral energy consumption in the commercial, industrial, and residential sectors (trillion Btu). Units adhere to the conventions of the Monthly Energy Review, with energy metrics predominantly expressed in U.S. customary units—such as Btu for energy and barrels for petroleum volumes—and emissions in metric units.
 
 ## Model
 
 ### Model 1
+
+```{r}
+model1 <- lm(
+  Total_CO2_Emissions ~ . 
+    - Date - Year - Month,   # drop any time‐index cols
+  data = data
+)
+
+summary(model1)
+
+acf(resid(model1), main = "ACF of OLS Residuals")
+pacf(resid(model1), main = "PACF of OLS Residuals")
+```
 
 ### Model 2
 
