@@ -180,7 +180,7 @@ plot(data$Date, data$Total_CO2_Emissions, type = "l", col = "black", lwd = 2,
 lines(data$Date, y_hat_combined, col = "red", lwd = 2)
 
 legend("topright",
-       legend = c("Actual", "LM + ARIMA Fit"),
+       legend = c("Observed", "LM + ARIMA Fit"),
        col = c("black", "red"),
        lty = 1,
        lwd = 2,
@@ -200,7 +200,7 @@ plot(data$Date, y_true, type = "l", col = "black", lwd = 2,
 lines(data$Date, y_lm, col = "red", lwd = 2)
 
 legend("topright",
-       legend = c("Actual", "Linear Model Fit"),
+       legend = c("Observed", "Linear Model Fit"),
        col = c("black", "red"),
        lty = 1,
        lwd = 2,
