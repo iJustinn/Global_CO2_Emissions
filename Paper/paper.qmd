@@ -115,10 +115,13 @@ By observing the ACF plot, we can conclude that the total CO2 emission is non-st
 ### Model 1
 
 ```{r}
+data_train <- data[data$Year <= 2020, ]
+data_test  <- data[data$Year > 2020, ]
+
 model1 <- lm(
   Total_CO2_Emissions ~ . 
     - Date - Year - Month,
-  data = data
+  data = data_train
 )
 
 summary(model1)
@@ -131,7 +134,7 @@ plot(model1$fitted.values, resid(model1),
      main = "Residuals vs Fitted")
 abline(h = 0, col = "red")
 
-plot(data$Date, resid(model1),
+plot(data_train$Date, resid(model1),
      type = "l",
      xlab = "Date",
      ylab = "Residuals",
@@ -171,13 +174,13 @@ y_hat_lm <- fitted(model1)
 resid_hat_arima <- fitted(resid_arima)
 y_hat_combined <- y_hat_lm + resid_hat_arima
 
-plot(data$Date, data$Total_CO2_Emissions, type = "l", col = "black", lwd = 2,
+plot(data_train$Date, data_train$Total_CO2_Emissions, type = "l", col = "black", lwd = 2,
      ylab = "Total CO2 Emissions (million metric tons)",
      xlab = "Date",
      main = "Combined Model Fit",
      cex.lab = 1.2, cex.main = 1.4)
 
-lines(data$Date, y_hat_combined, col = "red", lwd = 2)
+lines(data_train$Date, y_hat_combined, col = "red", lwd = 2)
 
 legend("topright",
        legend = c("Observed", "LM + ARIMA Fit"),
@@ -188,16 +191,16 @@ legend("topright",
        bty = "n") 
 ```
 ```{r}
-y_true <- data$Total_CO2_Emissions
+y_true <- data_train$Total_CO2_Emissions
 y_lm   <- fitted(model1)
 
-plot(data$Date, y_true, type = "l", col = "black", lwd = 2,
+plot(data_train$Date, y_true, type = "l", col = "black", lwd = 2,
      ylab = "Total CO2 Emissions (million metric tons)",
      xlab = "Date",
      main = "Linear Model Fit vs Actual",
      cex.lab = 1.2, cex.main = 1.4)
 
-lines(data$Date, y_lm, col = "red", lwd = 2)
+lines(data_train$Date, y_lm, col = "red", lwd = 2)
 
 legend("topright",
        legend = c("Observed", "Linear Model Fit"),
@@ -221,6 +224,37 @@ rmse_combined <- sqrt(mean((y_true - y_hat_combined)^2))
 
 cat("RMSE of Linear Model:", rmse_lm, "\n")
 cat("RMSE of Linear + ARIMA Model:", rmse_combined, "\n")
+```
+```{r}
+# Predict data adter 2020
+pred_result <- predict(model1, newdata = data_test, interval = "prediction", level = 0.95)
+
+y_test_true <- data_test$Total_CO2_Emissions
+y_test_pred <- pred_result[, "fit"]
+y_test_lower <- pred_result[, "lwr"]
+y_test_upper <- pred_result[, "upr"]
+
+plot(data_test$Date, y_test_true, type = "l", col = "black", lwd = 2,
+     ylab = "Total CO2 Emissions (million metric tons)",
+     xlab = "Date",
+     main = "Out-of-Sample Forecast with 95% Prediction Interval",
+     cex.lab = 1.2, cex.main = 1.4)
+
+lines(data_test$Date, y_test_pred, col = "blue", lwd = 2)
+lines(data_test$Date, y_test_lower, col = "blue", lty = 2, lwd = 1.5)
+lines(data_test$Date, y_test_upper, col = "blue", lty = 2, lwd = 1.5)
+
+legend("topright",
+       legend = c("Observed", "Predicted", "95% Prediction Interval"),
+       col = c("black", "blue", "blue"),
+       lty = c(1, 1, 2),
+       lwd = 2,
+       cex = 1.1,
+       bty = "n")
+```
+
+```{r}
+
 ```
 
 ### Model 2
