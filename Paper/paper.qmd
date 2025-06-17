@@ -123,17 +123,112 @@ model1 <- lm(
 
 summary(model1)
 
+```
+```{r}
+plot(model1$fitted.values, resid(model1),
+     xlab = "Fitted Values",
+     ylab = "Residuals",
+     main = "Residuals vs Fitted")
+abline(h = 0, col = "red")
+
+plot(data$Date, resid(model1),
+     type = "l",
+     xlab = "Date",
+     ylab = "Residuals",
+     main = "Residuals Over Time")
+abline(h = 0, col = "red")
+
+
+hist(resid(model1),
+     breaks = 30,
+     main = "Histogram of Residuals",
+     xlab = "Residuals")
+
+# Residuals satisfied identical normal distribution
+qqnorm(resid(model1))
+qqline(resid(model1), col = "red")
+```
+```{r}
 acf(resid(model1), main = "ACF of Residuals")
 pacf(resid(model1), main = "PACF of Residuals")
 
+# ljung-box test shows that the residuals are auto-correlated
+Box.test(resid(model1), lag = 20, type = "Ljung-Box")  
 
+```
+```{r}
+# auto fitted arima
+resid_ts <- ts(resid(model1))
+resid_arima <- auto.arima(resid_ts)
+summary(resid_arima)
+```
+```{r}
+forecast::auto.arima(resid(model1))
+```
+```{r}
+y_hat_lm <- fitted(model1) 
+
+resid_hat_arima <- fitted(resid_arima)
+y_hat_combined <- y_hat_lm + resid_hat_arima
+
+plot(data$Date, data$Total_CO2_Emissions, type = "l", col = "black", lwd = 2,
+     ylab = "Total CO2 Emissions (million metric tons)",
+     xlab = "Date",
+     main = "Combined Model Fit",
+     cex.lab = 1.2, cex.main = 1.4)
+
+lines(data$Date, y_hat_combined, col = "red", lwd = 2)
+
+legend("topright",
+       legend = c("Actual", "LM + ARIMA Fit"),
+       col = c("black", "red"),
+       lty = 1,
+       lwd = 2,
+       cex = 1.1,
+       bty = "n") 
+```
+```{r}
+y_true <- data$Total_CO2_Emissions
+y_lm   <- fitted(model1)
+
+plot(data$Date, y_true, type = "l", col = "black", lwd = 2,
+     ylab = "Total CO2 Emissions (million metric tons)",
+     xlab = "Date",
+     main = "Linear Model Fit vs Actual",
+     cex.lab = 1.2, cex.main = 1.4)
+
+lines(data$Date, y_lm, col = "red", lwd = 2)
+
+legend("topright",
+       legend = c("Actual", "Linear Model Fit"),
+       col = c("black", "red"),
+       lty = 1,
+       lwd = 2,
+       cex = 1.1,
+       bty = "n")
+```
+
+```{r}
+
+rss_lm <- sum((y_true - y_lm)^2)
+rss_combined <- sum((y_true - y_hat_combined)^2)
+
+cat("RSS of Linear Model:", rss_lm, "\n")
+cat("RSS of Linear + ARIMA Model:", rss_combined, "\n")
+
+rmse_lm <- sqrt(mean((y_true - y_lm)^2))
+rmse_combined <- sqrt(mean((y_true - y_hat_combined)^2))
+
+cat("RMSE of Linear Model:", rmse_lm, "\n")
+cat("RMSE of Linear + ARIMA Model:", rmse_combined, "\n")
 ```
 
 ### Model 2
 
 ```{r}
-forecast::auto.arima(resid(model1))
+# forecast::auto.arima(resid(model1))
 ```
+
 
 # Result {#sec-result}
 
