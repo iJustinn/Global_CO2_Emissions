@@ -181,11 +181,11 @@ qqline(resid(model1), col = "red")
 
 In the scatter plot of residuals against the fitted values, there is no clear funnel or curvature, which suggests that the variance of the errors is roughly constant across the range of predicted $CO_2$ emissions.
 
-However, when we plot the residuals in time order, a pronounced seasonal “saw tooth” pattern emerges—residuals swing positive and negative in a regular annual pattern. This indicates that our purely cross-sectional predictors haven't captured the strong yearly cycle in emissions, and so that seasonality remains in the error term.
+However, when we plot the residuals in time order, a pronounced seasonal “saw tooth” pattern emerges-residuals swing positive and negative in a regular annual pattern. This indicates that our purely cross-sectional predictors haven't captured the strong yearly cycle in emissions, and so that seasonality remains in the error term.
 
 The histogram of residuals is roughly symmetric around zero and appears approximately bell-shaped, albeit with mildly heavier tails than a perfect normal distribution.
 
-The Q–Q plot confirms this: most points lie very close to the 45° line, indicating near-normality, but the extreme ends (both lower and upper tails) deviate slightly. In practice, these small departures from Gaussianity are unlikely to invalidate inference, especially once we explicitly model the autocorrelation and seasonality.
+The Q-Q plot confirms this: most points lie very close to the 45° line, indicating near-normality, but the extreme ends (both lower and upper tails) deviate slightly. In practice, these small departures from Gaussianity are unlikely to invalidate inference, especially once we explicitly model the autocorrelation and seasonality.
 
 Second, we examined the sample ACF and PACF of $\hat{x}_t$ to identify candidate ARMA(p,q) structures. Potential orders p and q were chosen by the usual cut-off and tail-off patterns in these plots. Finally we applied `forecast::auto.arima()` to select an appropriate ARIMA(p,d,q) model
 
@@ -205,7 +205,7 @@ resid_arima <- auto.arima(resid_ts)
 summary(resid_arima)
 ```
 
-The `auto.arima()` call picked an ARIMA(5,1,2) model on the OLS residuals $\hat{x}_t$. Concretely, letting $\nabla \hat{x}_t = \hat{x}_t - \hat{x}_{t-1}$, the fitted model is $$ (1 - 0.2594 B + 0.3250 B^2 + 0.0259 B^3 - 0.1480 B^4 + 0.1365 B^5)(1 - B)\hat x_t = (1 - 0.2066 B - 0.6959 B^2)w_t$$ where B is the backshift operator and $w_t$ is white noise with estimated $\sigma^2(w_t) = 468.3$. AIC of 5178.1 confirms this is the most parsimonious high-order fit auto.arima found, and the small training-set ACF1 ($\approx 0.028$) suggests remaining serial dependence is minimal after differencing and fitting these parameters.
+The `auto.arima()` call picked an ARIMA(5,1,2) model on the OLS residuals $\hat{x}_t$. Concretely, letting $\nabla \hat{x}_t = \hat{x}_t - \hat{x}_{t-1}$, the fitted model is $$ (1 - 0.2594 B + 0.3250 B^2 + 0.0259 B^3 - 0.1480 B^4 + 0.1365 B^5)(1 - B)\hat x_t = (1 - 0.2066 B - 0.6959 B^2)w_t$$ where B is the backshift operator and $w_t$ is white noise with estimated $\sigma^2(w_t) = 468.3$. AIC of 5178.1 confirms this is the most parsimonious high-order fit `auto.arima` found, and the small training-set ACF1 ($\approx 0.028$) suggests remaining serial dependence is minimal after differencing and fitting these parameters.
 
 ```{r}
 forecast::auto.arima(resid(model1))
