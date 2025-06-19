@@ -56,7 +56,7 @@ The paper is structured as follows: @sec-method TBD, @sec-result TBD, @sec-discu
 
 ## Data
 
-The dataset is sourced from the the U.S. Energy Information Administration’s (EIA) Monthly Energy Review that issues detailed energy statistics, including production, consumption, trade, and emissions metrics. The Monthly Energy Review is released on the last workday of each month and contains preliminary data that are subject to revision in subsequent releases, as well as historical data that may be updated when source publications are revised. For this project, data were extracted for the period ranging from January 1973 to February 2025, with a total of 626 records at a monthly frequency. The EIA collects these data through standardized survey forms completed by energy industry participants, following review protocols approved every three years to ensure consistency and quality across reporting entities.
+The dataset is from the U.S. Energy Information Administration’s (EIA) Monthly Energy Review, which issues detailed energy statistics, including production, consumption, trade, and emissions metrics. The Monthly Energy Review is released on the last workday of each month. It contains preliminary data that are subject to revision in subsequent releases and historical data that may be updated when source publications are revised. For this project, data were extracted for the period ranging from January 1973 to February 2025, with a total of 626 records at a monthly frequency. The EIA collects these data through standardized survey forms completed by energy industry participants, following review protocols approved every three years to ensure consistency and quality across reporting entities.
 
 ```{r}
 #| label: tbl-summary
@@ -83,18 +83,18 @@ ggplot(data, aes(x = Date, y = Total_CO2_Emissions)) +
 
 
 data_zoom <- data %>%
-  filter(Date >= as.Date("2015-01-01") & Date <= as.Date("2020-12-31"))
+  filter(Date >= as.Date("2015-01-01") & Date <= as.Date("2022-12-31"))
 
 
 ggplot(data_zoom, aes(x = Date, y = Total_CO2_Emissions)) +
   geom_line(size = 1) +
   labs(
-    title = "Total CO2 Emissions (2015–2020)",
+    title = "Total CO2 Emissions (2015–2022)",
     x     = "Date",
     y     = "Total CO2 Emissions (million metric tons)"
   ) +
   theme_minimal() +
-  scale_x_date(date_breaks = "6 months", date_labels = "%Y-%m")  
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y")  
 
 acf(
   data$Total_CO2_Emissions,
@@ -104,11 +104,12 @@ acf(
 )
 ```
 
-Key variables included in the cleaned dataset are total $CO_2$ emissions (million metric tons), transportation petroleum consumption (million barrels per day), total fossil fuels production and total renewable energy production (quadrillion British thermal units [Btu]), and sectoral energy consumption in the commercial, industrial, and residential sectors (trillion Btu). Units adhere to the conventions of the Monthly Energy Review, with energy metrics predominantly expressed in U.S. customary units—such as Btu for energy and barrels for petroleum volumes—and emissions in metric units.
+The cleaned dataset is constructed by concatenating monthly U.S. data from different categories. It includes energy production, sectoral energy use, transportation fuel use, and $CO_2$ emissions.   Emissions from other sources are aggregated by date, and the total emissions across all sectors are calculated. Additional statistics on petroleum consumption, fossil fuel and renewable energy output, and residential, commercial, and industrial energy consumption are merged after standardized Year and Month variables have been extracted. All datasets are joined in year and month.
 
-From plot 1, we can say that from the early 1970s through 2005, total CO2 emissions has a clear upward trend, and then a decay from 2005 to present. The sharp dip around 2020 likely reflects the economic slowdown during the COVID‑19 pandemic, everyone is in quarantine, hence there is less traffic and fossil fuel usage, which could be the reason of the dip.
+The resulting dataset captures key indicators such as total $CO_2$ emissions (million metric tons), transportation petroleum consumption (million barrels per day), total fossil fuel and renewable energy output (quadrillion Btu), and sectoral energy consumption (trillion Btu). Units adhere to the conventions of the Monthly Energy Review, with energy metrics predominantly expressed in U.S. customary units—such as Btu for energy and barrels for petroleum volumes—and emissions in metric units.
 
-By observing the ACF plot, we can conclude that the total CO2 emission is non-stationary since the lag‑1 autocorrelation is essentially 1.0, and the ACF decays very slowly, confirming the presence of non-stationary mean in the series.
+From plot 1, we can say that total CO2 emissions have a clear upward trend from the early 1970s through 2005 and then a decay from 2005 to the present. The sharp dip around 2020 likely reflects the economic slowdown during the COVID‑19 pandemic. During this period, widespread lockdowns resulted in a significant reduction in transportation, industrial activity, and fossil fuel consumption, which contributed to the observed decline in emissions.
+The ACF plot shows that the total CO2 emission is non-stationary since the lag‑1 autocorrelation is significant and the ACF decays very slowly. This confirms the presence of a non-stationary mean in the series.
 
 ## Model
 
