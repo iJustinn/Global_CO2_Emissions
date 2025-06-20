@@ -34,9 +34,10 @@ library(astsa)
 library(here)
 
 # load data
-co2 <- read.csv(here("data", "owid-co2-data.csv"))
+
 
 # load model
+
 
 ```
 
@@ -46,9 +47,9 @@ co2 <- read.csv(here("data", "owid-co2-data.csv"))
 
 Climate change has become a critical global challenge, driven largely by rising carbon dioxide (CO$_2$) emissions from human activities. The Intergovernmental Panel on Climate Change (IPCC) warns that without immediate and deep emission reductions, the world is on track to exceed the Paris Agreement’s 1.5°C warming threshold, underscoring an urgent need to curb CO$_2$ from all sectors [@citeIPCC]. In this context, the United States – historically the single largest national source of CO$_2$ – plays a pivotal role. Cumulatively, the U.S. has emitted roughly 25% of all fossil-fuel CO$_2$ since the industrial era began [@citeOwid], and it remains one of the top annual emitters today. Understanding the trajectory of U.S. emissions, especially from major sectors like transportation, industry, and energy generation, is therefore of global importance for climate change mitigation.
 
-This project focuses on analyzing the effect of U.S. transportation, industry, and energy generation on CO$_2$ emissions from 1750 up to 2023. Using historical emissions data from the Our World in Data's dataset [@citeData], we examine how these three key sectors have contributed to national CO$_2$ output over time. The study not only reviews historical trends but also develops forecasts for future emissions, providing both a retrospective and forward-looking perspective on U.S. CO$_2$ emissions.
-
 The motivation for this research is grounded in climate and energy policy relevance. The chosen sectors – transportation, industrial production, and power generation – are the dominant sources of U.S. greenhouse gas emissions [@citeEnergyConsumption]. For example, in 2019 the transportation sector accounted for about 29% of U.S. CO$_2$-equivalent emissions, followed by electricity generation (∼25%) and industrial processes (∼23%) [@citeEnergyConsumption]. These activities collectively drive the bulk of national emissions, meaning any meaningful climate strategy must address each of them. Analyzing historical patterns in these sectors can reveal how past economic growth, technological changes, and policies (such as vehicle efficiency standards or power plant regulations) have impacted emissions. Moreover, forecasting future emissions is crucial for gauging progress toward sustainability goals. The U.S. has set ambitious targets under the Paris Agreement – pledging a 50–52% reduction in greenhouse gases by 2030 (from 2005 levels) and net-zero emissions by 2050 [@citeEnergyConsumption] – which heightens the real-world significance of this study. By projecting emissions trajectories, we can assess whether current trends align with these climate goals or if additional policy interventions may be required.
+
+This paper will analyze monthly data from the U.S. Energy Information Administration [@citeDataEIA], focusing on trends in energy consumption and production across major sectors. Our response variable is total $CO_2$ emissions, modeled as a function of six key predictors: transportation petroleum consumption, fossil fuel production, renewable energy generation, and energy consumption by the commercial, industrial, and residential sectors. Given the temporal nature of the data, we employ an ARIMA model and XXX, which will be discussed in more detail later. These two modeling approach allows us to assess both the cross-sectional and time-dependent dynamics influencing emissions, also enabling us to do forecasting .
 
 The paper is structured as follows: @sec-method TBD, @sec-result TBD, @sec-discussion TBD.
 
@@ -56,13 +57,16 @@ The paper is structured as follows: @sec-method TBD, @sec-result TBD, @sec-discu
 
 ## Data
 
-The dataset is sourced from the the U.S. Energy Information Administration’s (EIA) Monthly Energy Review that issues detailed energy statistics, including production, consumption, trade, and emissions metrics. The Monthly Energy Review is released on the last workday of each month and contains preliminary data that are subject to revision in subsequent releases, as well as historical data that may be updated when source publications are revised. For this project, data were extracted for the period ranging from January 1973 to February 2025, with a total of 626 records at a monthly frequency. The EIA collects these data through standardized survey forms completed by energy industry participants, following review protocols approved every three years to ensure consistency and quality across reporting entities.
+The dataset [@citeDataEIA] is sourced from the the U.S. Energy Information Administration’s (EIA) Monthly Energy Review that issues detailed energy statistics, including production, consumption, trade, and emissions metrics. The Monthly Energy Review is released on the last workday of each month and contains preliminary data that are subject to revision in subsequent releases, as well as historical data that may be updated when source publications are revised. For this project, data were extracted for the period ranging from January 1973 to February 2025, with a total of 626 records at a monthly frequency. The EIA collects these data through standardized survey forms completed by energy industry participants, following review protocols approved every three years to ensure consistency and quality across reporting entities.
 
 ```{r}
-#| label: tbl-summary
+#| label: fig-summary-1
 #| echo: false
 #| warning: false
 #| message: false
+#| layout-ncol: 2
+#| fig-cap: "Data Overview"
+#| fig-subcap: ["Total CO2 Emissions Over Time", "Total CO2 Emissions (2015–2020)"]
 
 data <- read.csv("../Data/cleaned_data.csv")
 
@@ -75,7 +79,6 @@ data <- data %>%
 ggplot(data, aes(x = Date, y = Total_CO2_Emissions)) +
   geom_line(size = 1) +
   labs(
-    title = "Total CO2 Emissions Over Time",
     x     = "Date",
     y     = "Total CO2 Emissions (million metric tons)"
   ) +
@@ -89,20 +92,31 @@ data_zoom <- data %>%
 ggplot(data_zoom, aes(x = Date, y = Total_CO2_Emissions)) +
   geom_line(size = 1) +
   labs(
-    title = "Total CO2 Emissions (2015–2020)",
     x     = "Date",
     y     = "Total CO2 Emissions (million metric tons)"
   ) +
   theme_minimal() +
   scale_x_date(date_breaks = "6 months", date_labels = "%Y-%m")  
 
-acf(
-  data$Total_CO2_Emissions,
-  main = "ACF of Total CO2 Emissions",
-  xlab = "Lag",
-  ylab = "Autocorrelation"
-)
 ```
+
+```{r}
+#| label: fig-summary-2
+#| echo: false
+#| warning: false
+#| message: false
+#| fig-cap: "ACF of Total CO2 Emissions"
+
+# Convert to time series first
+co2_ts <- ts(data$Total_CO2_Emissions)
+
+# Generate ACF object without plotting
+acf_obj <- acf(co2_ts, plot = FALSE)
+
+# Manually plot it without a title
+plot(acf_obj, main = "")
+```
+
 
 Key variables included in the cleaned dataset are total $CO_2$ emissions (million metric tons), transportation petroleum consumption (million barrels per day), total fossil fuels production and total renewable energy production (quadrillion British thermal units \[Btu\]), and sectoral energy consumption in the commercial, industrial, and residential sectors (trillion Btu). Units adhere to the conventions of the Monthly Energy Review, with energy metrics predominantly expressed in U.S. customary units—such as Btu for energy and barrels for petroleum volumes—and emissions in metric units.
 
@@ -134,11 +148,17 @@ First, we fit an ordinary regression of $y_t$ on $z_{t1}$, ··· , $z_{t6}$ (ac
 
 $${y}_{t} = \sum^{6}_{j=1}\beta_{j} z_{tj} + x_t$$
 
-From this fit we can retain the residuals by $$\hat{x}_{t} = y_t-\sum^{r}_{j=1}\beta_{j} z_{tj}$$.
+From this fit we can retain the residuals by $$\hat{x}_{t} = y_t-\sum^{r}_{j=1}\beta_{j} z_{tj}$$
 
 ### Model 1
 
 ```{r}
+#| label: tbl-model-summary
+#| tbl-cap: "Model 1 Summary"
+#| echo: false
+#| warning: false
+#| message: false
+
 data_train <- data[data$Year <= 2020, ]
 data_test  <- data[data$Year > 2020, ]
 
@@ -148,34 +168,75 @@ model1 <- lm(
   data = data_train
 )
 
-summary(model1)
+model_summary <- summary(model1)
+
+# Convert coefficients to a data frame
+coef_table <- as.data.frame(coef(model_summary))
+
+# Add row names as a column
+coef_table$Variable <- rownames(coef_table)
+rownames(coef_table) <- NULL
+
+# Reorder
+coef_table <- coef_table[, c("Variable", "Estimate", "Std. Error", "t value", "Pr(>|t|)")]
+
+# Shorten variable names using a named vector
+var_names <- c(
+  "(Intercept)" = "(Intercept)",
+  "Transportarion.Petroleum.Consumption" = "Transportation",
+  "Total.Fossil.Fuels.Production" = "Fossil Fuel Prod.",
+  "Total.Renewable.Energy.Production" = "Renewable Energy Prod.",
+  "Commercial_Consumption" = "Commercial",
+  "Industrial_Consumption" = "Industrial",
+  "Residential_Consumption" = "Residential"
+)
+
+# Apply shortened names
+coef_table$Variable <- var_names[coef_table$Variable]
+
+# Add significance codes (optional, mimicking base R behavior)
+coef_table$Significance <- cut(coef_table$`Pr(>|t|)`,
+                               breaks = c(-Inf, 0.001, 0.01, 0.05, 0.1, Inf),
+                               labels = c("***", "**", "*", ".", ""))
+
+# Display the table
+knitr::kable(coef_table, digits = 4)
 
 ```
 
 In our case, our model is $$y_t = 294.1+ 1.235z_{t1}- 38.07z_{t2}- 256.3z_{t3}+ 0.5023z_{t4}+ 0.1639z_{t5}+ 0.001546z_{t6}+ x_t$$
 
+
 ```{r}
+#| label: fig-model1-fittings
+#| echo: false
+#| warning: false
+#| message: false
+#| fig-cap: "Model 1 Diagnostic Plots"
+#| fig-subcap: ["Residuals vs Fitted", "Residuals Over Time", "Histogram of Residuals", "Normal Q-Q Plot"]
+#| layout-nrow: 2
+#| layout-ncol: 2
+#| fig-height: 5
+#| fig-width: 6
+
 plot(model1$fitted.values, resid(model1),
      xlab = "Fitted Values",
-     ylab = "Residuals",
-     main = "Residuals vs Fitted")
+     ylab = "Residuals")
 abline(h = 0, col = "red")
 
 plot(data_train$Date, resid(model1),
      type = "l",
      xlab = "Date",
-     ylab = "Residuals",
-     main = "Residuals Over Time")
+     ylab = "Residuals")
 abline(h = 0, col = "red")
-
 
 hist(resid(model1),
      breaks = 30,
-     main = "Histogram of Residuals",
+     main = NULL,
      xlab = "Residuals")
 
 # Residuals satisfied identical normal distribution
-qqnorm(resid(model1))
+qqnorm(resid(model1), main = NULL)
 qqline(resid(model1), col = "red")
 ```
 
@@ -190,28 +251,134 @@ The Q-Q plot confirms this: most points lie very close to the 45° line, indicat
 Second, we examined the sample ACF and PACF of $\hat{x}_t$ to identify candidate ARMA(p,q) structures. Potential orders p and q were chosen by the usual cut-off and tail-off patterns in these plots. Finally we applied `forecast::auto.arima()` to select an appropriate ARIMA(p,d,q) model
 
 ```{r}
-acf(resid(model1), main = "ACF of Residuals")
-pacf(resid(model1), main = "PACF of Residuals")
+#| label: fig-acf-model1
+#| fig-cap: "ACF of Residuals for Model 1"
+#| echo: false
+#| warning: false
+#| message: false
 
-# ljung-box test shows that the residuals are auto-correlated
-Box.test(resid(model1), lag = 20, type = "Ljung-Box")  
-
+acf(resid(model1), main = "")
 ```
 
+@fig-acf-model1 shows the autocorrelation of residuals from our linear model. We observe significant spikes at multiple lags, especially early ones, which exceed the blue dashed significance bands. This means the residuals are not independent over time, and there is clear serial correlation remaining in the model. This suggests that our linear model has not fully captured the temporal structure of the data.
+
 ```{r}
+#| label: fig-pacf-model1
+#| fig-cap: "PACF of Residuals for Model 1"
+#| echo: false
+#| warning: false
+#| message: false
+
+pacf(resid(model1), main = "")
+```
+
+@fig-pacf-model1 shows partial autocorrelations of the residuals. We see large spikes at the first few lags, indicating that past values have a direct influence on the current residuals, even after accounting for previous lags. This supports the idea that an autoregressive structure may still be present and needs to be modeled, possibly with an ARIMA or time series component.
+
+```{r}
+#| label: tbl-model1-box
+#| echo: false
+#| warning: false
+#| message: false
+#| tbl-cap: "Box-Ljung Test on Model Residuals"
+
+# ljung-box test shows that the residuals are auto-correlated
+ljung_result <- Box.test(resid(model1), lag = 20, type = "Ljung-Box")
+
+# Create table from the output
+box_test_table <- data.frame(
+  `Test`       = "Box-Ljung",
+  `Statistic`  = round(ljung_result$statistic, 2),
+  `df`         = ljung_result$parameter,
+  `p-value`    = format.pval(ljung_result$p.value, digits = 3, eps = .001)
+)
+
+# Display the table
+knitr::kable(box_test_table)
+```
+
+The Box-Ljung test (@tbl-model1-box) checks whether residuals are independently distributed. Here, the test statistic is 967.69 with 20 degrees of freedom, and the p-value is less than 0.001. This result strongly rejects the null hypothesis of no autocorrelation, confirming that the residuals still contain time-dependent patterns and the current model is insufficient to capture them.
+
+```{r}
+#| label: tbl-model1-auto-arima
+#| echo: false
+#| warning: false
+#| message: false
+#| tbl-cap: "ARIMA Model Summary on OLS Residuals"
+
 # auto fitted arima
 resid_ts <- ts(resid(model1))
-resid_arima <- auto.arima(resid_ts)
-summary(resid_arima)
+resid_arima <- forecast::auto.arima(resid_ts)
+
+# Extract summary metrics
+arima_summary <- summary(resid_arima)
+
+# Get training accuracy metrics separately
+train_metrics <- accuracy(resid_arima)
+
+# Build a combined table
+arima_metrics <- data.frame(
+  Metric = c("Sigma²", "Log Likelihood", "AIC", "AICc", "BIC",
+             "ME", "RMSE", "MAE", "MPE", "MAPE", "MASE", "ACF1"),
+  Value = c(
+    arima_summary$sigma2,
+    arima_summary$loglik,
+    arima_summary$aic,
+    arima_summary$aicc,
+    arima_summary$bic,
+    train_metrics[1, "ME"],
+    train_metrics[1, "RMSE"],
+    train_metrics[1, "MAE"],
+    train_metrics[1, "MPE"],
+    train_metrics[1, "MAPE"],
+    train_metrics[1, "MASE"],
+    train_metrics[1, "ACF1"]
+  )
+)
+
+# Display the table
+knitr::kable(arima_metrics, digits = 4)
 ```
 
 The `auto.arima()` call picked an ARIMA(5,1,2) model on the OLS residuals $\hat{x}_t$. Concretely, letting $\nabla \hat{x}_t = \hat{x}_t - \hat{x}_{t-1}$, the fitted model is $$ (1 - 0.2594 B + 0.3250 B^2 + 0.0259 B^3 - 0.1480 B^4 + 0.1365 B^5)(1 - B)\hat x_t = (1 - 0.2066 B - 0.6959 B^2)w_t$$ where B is the backshift operator and $w_t$ is white noise with estimated $\sigma^2(w_t) = 468.3$. AIC of 5178.1 confirms this is the most parsimonious high-order fit `auto.arima` found, and the small training-set ACF1 ($\approx 0.028$) suggests remaining serial dependence is minimal after differencing and fitting these parameters.
 
 ```{r}
-forecast::auto.arima(resid(model1))
+#| label: tbl-arima-coef
+#| echo: false
+#| warning: false
+#| message: false
+#| tbl-cap: "ARIMACoefficients and Standard Errors"
+
+# Fit ARIMA model
+resid_ts <- ts(resid(model1))
+resid_arima <- forecast::auto.arima(resid_ts)
+
+# Extract coefficients and standard errors
+coef_vals <- coef(resid_arima)
+se_vals <- sqrt(diag(resid_arima$var.coef))
+
+# Create table
+arima_coef_table <- data.frame(
+  Term = names(coef_vals),
+  Estimate = round(coef_vals, 4),
+  Std_Error = round(se_vals, 4)
+)
+
+# Display
+knitr::kable(arima_coef_table)
 ```
 
+
+
 ```{r}
+#| label: fig-model1-combine-fit-actual
+#| echo: false
+#| warning: false
+#| message: false
+#| fig-cap: "Model Fittings"
+#| fig-subcap: ["Combined Model Fit","Linear Model Fit vs Actual"]
+#| layout-ncol: 2
+#| fig-height: 5
+
 y_hat_lm <- fitted(model1) 
 
 resid_hat_arima <- fitted(resid_arima)
@@ -220,7 +387,6 @@ y_hat_combined <- y_hat_lm + resid_hat_arima
 plot(data_train$Date, data_train$Total_CO2_Emissions, type = "l", col = "black", lwd = 2,
      ylab = "Total CO2 Emissions (million metric tons)",
      xlab = "Date",
-     main = "Combined Model Fit",
      cex.lab = 1.2, cex.main = 1.4)
 
 lines(data_train$Date, y_hat_combined, col = "red", lwd = 2)
@@ -232,16 +398,15 @@ legend("topright",
        lwd = 2,
        cex = 1.1,
        bty = "n") 
-```
 
-```{r}
+
+
 y_true <- data_train$Total_CO2_Emissions
 y_lm   <- fitted(model1)
 
 plot(data_train$Date, y_true, type = "l", col = "black", lwd = 2,
      ylab = "Total CO2 Emissions (million metric tons)",
      xlab = "Date",
-     main = "Linear Model Fit vs Actual",
      cex.lab = 1.2, cex.main = 1.4)
 
 lines(data_train$Date, y_lm, col = "red", lwd = 2)
@@ -255,22 +420,44 @@ legend("topright",
        bty = "n")
 ```
 
-```{r}
+@fig-model1-combine-fit-actual compares the performance of two models in capturing U.S. $CO_2$ emissions over time. In both plots, the black line represents the observed emissions, while the red line shows the model predictions. @fig-model1-combine-fit-actual-1 shows the combined model (linear + ARIMA), which closely follows the seasonal and long-term trends, especially in the mid and later periods. @fig-model1-combine-fit-actual-2 displays the linear model alone, which captures the overall trend but misses the recurring seasonal spikes and dips.
 
+```{r}
+#| label: tbl-model-comparison
+#| echo: false
+#| warning: false
+#| message: false
+#| tbl-cap: "Comparison of Linear Model vs. Linear + ARIMA Model"
+
+# Compute RSS and RMSE if not already done
 rss_lm <- sum((y_true - y_lm)^2)
 rss_combined <- sum((y_true - y_hat_combined)^2)
-
-cat("RSS of Linear Model:", rss_lm, "\n")
-cat("RSS of Linear + ARIMA Model:", rss_combined, "\n")
 
 rmse_lm <- sqrt(mean((y_true - y_lm)^2))
 rmse_combined <- sqrt(mean((y_true - y_hat_combined)^2))
 
-cat("RMSE of Linear Model:", rmse_lm, "\n")
-cat("RMSE of Linear + ARIMA Model:", rmse_combined, "\n")
+# Create a comparison table
+model_comparison <- data.frame(
+  Model = c("Linear Model", "Linear + ARIMA Model"),
+  RSS   = c(rss_lm, rss_combined),
+  RMSE  = c(rmse_lm, rmse_combined)
+)
+
+# Display the table
+knitr::kable(model_comparison, digits = 4)
 ```
 
+
+
 ```{r}
+#| label: fig-rss-rmse-comparison
+#| echo: false
+#| warning: false
+#| message: false
+#| fig-cap: "RSS and RMSE Comparison of Linear vs. Linear + ARIMA Models"
+#| fig-height: 4
+#| fig-width: 6
+
 # Predict data adter 2020
 pred_result <- predict(model1, newdata = data_test, interval = "prediction", level = 0.95)
 
@@ -282,7 +469,6 @@ y_test_upper <- pred_result[, "upr"]
 plot(data_test$Date, y_test_true, type = "l", col = "black", lwd = 2,
      ylab = "Total CO2 Emissions (million metric tons)",
      xlab = "Date",
-     main = "Out-of-Sample Forecast with 95% Prediction Interval",
      cex.lab = 1.2, cex.main = 1.4)
 
 lines(data_test$Date, y_test_pred, col = "blue", lwd = 2)
@@ -298,9 +484,7 @@ legend("topright",
        bty = "n")
 ```
 
-```{r}
-
-```
+@fig-rss-rmse-comparison shows how well the combined Linear + ARIMA model predicts $CO_2$ emissions for the years 2021 to 2025. The black line represents the actual observed emissions, while the solid blue line shows the model’s predicted values, and the dashed blue lines indicate the 95% prediction interval. The predicted values follow the seasonal ups and downs of the observed data quite closely, staying mostly within the prediction bounds. This suggests that the model is effective at capturing both the trend and seasonal patterns in the data.
 
 ### Model 2
 
