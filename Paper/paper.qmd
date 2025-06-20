@@ -104,26 +104,37 @@ acf(
 )
 ```
 
-Key variables included in the cleaned dataset are total $CO_2$ emissions (million metric tons), transportation petroleum consumption (million barrels per day), total fossil fuels production and total renewable energy production (quadrillion British thermal units [Btu]), and sectoral energy consumption in the commercial, industrial, and residential sectors (trillion Btu). Units adhere to the conventions of the Monthly Energy Review, with energy metrics predominantly expressed in U.S. customary units—such as Btu for energy and barrels for petroleum volumes—and emissions in metric units.
+Key variables included in the cleaned dataset are total $CO_2$ emissions (million metric tons), transportation petroleum consumption (million barrels per day), total fossil fuels production and total renewable energy production (quadrillion British thermal units \[Btu\]), and sectoral energy consumption in the commercial, industrial, and residential sectors (trillion Btu). Units adhere to the conventions of the Monthly Energy Review, with energy metrics predominantly expressed in U.S. customary units—such as Btu for energy and barrels for petroleum volumes—and emissions in metric units.
 
-From plot 1, we can say that from the early 1970s through 2005, total CO2 emissions has a clear upward trend, and then a decay from 2005 to present. The sharp dip around 2020 likely reflects the economic slowdown during the COVID‑19 pandemic, everyone is in quarantine, hence there is less traffic and fossil fuel usage, which could be the reason of the dip.
+From plot 1, we can say that from the early 1970s through 2005, total $CO_2$ emissions has a clear upward trend, and then a decay from 2005 to present. The sharp dip around 2020 likely reflects the economic slowdown during the COVID‑19 pandemic, everyone is in quarantine, hence there is less traffic and fossil fuel usage, which could be the reason of the dip.
 
-By observing the ACF plot, we can conclude that the total CO2 emission is non-stationary since the lag‑1 autocorrelation is essentially 1.0, and the ACF decays very slowly, confirming the presence of non-stationary mean in the series.
+By observing the ACF plot, we can conclude that the total $CO_2$ emission is non-stationary since the lag‑1 autocorrelation is essentially 1.0, and the ACF decays very slowly, confirming the presence of non-stationary mean in the series.
 
 ## Model
 
-First, run an ordinary regression of $y_t$ on $z_{t1}$, ··· , $z_{tr}$ (acting as if the
-errors are uncorrelated). Retain the residuals,
-$\hat{x}_{t} = y_t-\sum^{r}_{j=1}\beta_{j} z_{tj}$.
+To model the relationship between total $CO_2$ emissions and the set of covariates we picked:
 
+${y}_{t}$ - Total $CO_2$ emissions
 
-Second, Identify ARMA model(s) for the residuals $\hat{x}_t$.
+$z_{t1}$ - Transportarion Petroleum Consumption
 
+$z_{t2}$ - Total Fossil Fuels Production
 
-Third, Run weighted least squares (or MLE) on the regression model with autocorrelated errors using the model specified in step (ii).
+$z_{t3}$ - Total Renewable Energy Production
 
+$z_{t4}$ - Commercial_Consumption
 
-Fourth, Inspect the residuals $\hat{w}_t$ for whiteness, and adjust the model if necessary.
+$z_{t5}$ - Industrial_Consumption
+
+$z_{t6}$ - Residential_Consumption
+
+while accounting for serial dependence in the errors, we followed the four-step procedure for regression with auto-correlated errors:
+
+First, we fit an ordinary regression of $y_t$ on $z_{t1}$, ··· , $z_{t6}$ (acting as if the errors are uncorrelated).
+
+$${y}_{t} = \sum^{6}_{j=1}\beta_{j} z_{tj} + x_t$$
+
+From this fit we can retain the residuals by $$\hat{x}_{t} = y_t-\sum^{r}_{j=1}\beta_{j} z_{tj}$$.
 
 ### Model 1
 
@@ -140,6 +151,8 @@ model1 <- lm(
 summary(model1)
 
 ```
+
+In our case, our model is $$y_t = 294.1+ 1.235z_{t1}- 38.07z_{t2}- 256.3z_{t3}+ 0.5023z_{t4}+ 0.1639z_{t5}+ 0.001546z_{t6}+ x_t$$
 
 ```{r}
 plot(model1$fitted.values, resid(model1),
@@ -166,6 +179,16 @@ qqnorm(resid(model1))
 qqline(resid(model1), col = "red")
 ```
 
+In the scatter plot of residuals against the fitted values, there is no clear funnel or curvature, which suggests that the variance of the errors is roughly constant across the range of predicted $CO_2$ emissions.
+
+However, when we plot the residuals in time order, a pronounced seasonal “saw tooth” pattern emerges-residuals swing positive and negative in a regular annual pattern. This indicates that our purely cross-sectional predictors haven't captured the strong yearly cycle in emissions, and so that seasonality remains in the error term.
+
+The histogram of residuals is roughly symmetric around zero and appears approximately bell-shaped, albeit with mildly heavier tails than a perfect normal distribution.
+
+The Q-Q plot confirms this: most points lie very close to the 45° line, indicating near-normality, but the extreme ends (both lower and upper tails) deviate slightly. In practice, these small departures from Gaussianity are unlikely to invalidate inference, especially once we explicitly model the autocorrelation and seasonality.
+
+Second, we examined the sample ACF and PACF of $\hat{x}_t$ to identify candidate ARMA(p,q) structures. Potential orders p and q were chosen by the usual cut-off and tail-off patterns in these plots. Finally we applied `forecast::auto.arima()` to select an appropriate ARIMA(p,d,q) model
+
 ```{r}
 acf(resid(model1), main = "ACF of Residuals")
 pacf(resid(model1), main = "PACF of Residuals")
@@ -181,6 +204,8 @@ resid_ts <- ts(resid(model1))
 resid_arima <- auto.arima(resid_ts)
 summary(resid_arima)
 ```
+
+The `auto.arima()` call picked an ARIMA(5,1,2) model on the OLS residuals $\hat{x}_t$. Concretely, letting $\nabla \hat{x}_t = \hat{x}_t - \hat{x}_{t-1}$, the fitted model is $$ (1 - 0.2594 B + 0.3250 B^2 + 0.0259 B^3 - 0.1480 B^4 + 0.1365 B^5)(1 - B)\hat x_t = (1 - 0.2066 B - 0.6959 B^2)w_t$$ where B is the backshift operator and $w_t$ is white noise with estimated $\sigma^2(w_t) = 468.3$. AIC of 5178.1 confirms this is the most parsimonious high-order fit `auto.arima` found, and the small training-set ACF1 ($\approx 0.028$) suggests remaining serial dependence is minimal after differencing and fitting these parameters.
 
 ```{r}
 forecast::auto.arima(resid(model1))
@@ -282,7 +307,6 @@ legend("topright",
 ```{r}
 # forecast::auto.arima(resid(model1))
 ```
-
 
 # Result {#sec-result}
 
