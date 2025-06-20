@@ -3,7 +3,7 @@ title: "project title"
 subtitle: "project subtitle"
 author: 
   - a
-  - b
+  - Jiacan Sun
   - Kevin You
   - Ziheng Zhong
 thanks: "Code and data supporting this analysis is available at: [Link to repository](https://github.com/iJustinn/Global_CO2_Emissions.git)."
@@ -11,6 +11,7 @@ date: today
 date-format: long
 abstract: ""
 format: pdf
+jupyter: python3  
 toc: true
 number-sections: true
 bibliography: references.bib
@@ -57,6 +58,7 @@ The paper is structured as follows: @sec-method TBD, @sec-result TBD, @sec-discu
 
 ## Data
 
+The dataset is from the U.S. Energy Information Administration’s (EIA) Monthly Energy Review, which issues detailed energy statistics, including production, consumption, trade, and emissions metrics. The Monthly Energy Review is released on the last workday of each month. It contains preliminary data that are subject to revision in subsequent releases and historical data that may be updated when source publications are revised. For this project, data were extracted for the period ranging from January 1973 to February 2025, with a total of 626 records at a monthly frequency. The EIA collects these data through standardized survey forms completed by energy industry participants, following review protocols approved every three years to ensure consistency and quality across reporting entities.
 The dataset [@citeDataEIA] is sourced from the the U.S. Energy Information Administration’s (EIA) Monthly Energy Review that issues detailed energy statistics, including production, consumption, trade, and emissions metrics. The Monthly Energy Review is released on the last workday of each month and contains preliminary data that are subject to revision in subsequent releases, as well as historical data that may be updated when source publications are revised. For this project, data were extracted for the period ranging from January 1973 to February 2025, with a total of 626 records at a monthly frequency. The EIA collects these data through standardized survey forms completed by energy industry participants, following review protocols approved every three years to ensure consistency and quality across reporting entities.
 
 ```{r}
@@ -86,19 +88,27 @@ ggplot(data, aes(x = Date, y = Total_CO2_Emissions)) +
 
 
 data_zoom <- data %>%
-  filter(Date >= as.Date("2015-01-01") & Date <= as.Date("2020-12-31"))
+  filter(Date >= as.Date("2015-01-01") & Date <= as.Date("2022-12-31"))
 
 
 ggplot(data_zoom, aes(x = Date, y = Total_CO2_Emissions)) +
   geom_line(size = 1) +
   labs(
+    title = "Total CO2 Emissions (2015–2022)",
     x     = "Date",
     y     = "Total CO2 Emissions (million metric tons)"
   ) +
   theme_minimal() +
-  scale_x_date(date_breaks = "6 months", date_labels = "%Y-%m")  
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y")  
 
 ```
+
+The cleaned dataset is constructed by concatenating monthly U.S. data from different categories. It includes energy production, sectoral energy use, transportation fuel use, and $CO_2$ emissions.   Emissions from other sources are aggregated by date, and the total emissions across all sectors are calculated. Additional statistics on petroleum consumption, fossil fuel and renewable energy output, and residential, commercial, and industrial energy consumption are merged after standardized Year and Month variables have been extracted. All datasets are joined in year and month.
+
+The resulting dataset captures key indicators such as total $CO_2$ emissions (million metric tons), transportation petroleum consumption (million barrels per day), total fossil fuel and renewable energy output (quadrillion Btu), and sectoral energy consumption (trillion Btu). Units adhere to the conventions of the Monthly Energy Review, with energy metrics predominantly expressed in U.S. customary units—such as Btu for energy and barrels for petroleum volumes—and emissions in metric units.
+
+From plot 1, we can say that total CO2 emissions have a clear upward trend from the early 1970s through 2005 and then a decay from 2005 to the present. The sharp dip around 2020 likely reflects the economic slowdown during the COVID‑19 pandemic. During this period, widespread lockdowns resulted in a significant reduction in transportation, industrial activity, and fossil fuel consumption, which contributed to the observed decline in emissions.
+The ACF plot shows that the total CO2 emission is non-stationary since the lag‑1 autocorrelation is significant and the ACF decays very slowly. This confirms the presence of a non-stationary mean in the series.
 
 ```{r}
 #| label: fig-summary-2
@@ -488,8 +498,170 @@ legend("topright",
 
 ### Model 2
 
-```{r}
-# forecast::auto.arima(resid(model1))
+```{python}
+import os
+import random
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import mean_squared_error
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense, Dropout
+from tensorflow.keras.callbacks import EarlyStopping
+
+
+
+
+df = pd.read_csv("../Data/cleaned_data.csv")
+```
+
+```{python}
+df['Date'] = pd.to_datetime(df['Year'].astype(str) + '-' + df['Month'].astype(str) + '-01')
+df = df.sort_values('Date')
+
+features = [
+    'Transportarion Petroleum Consumption',
+    'Total Fossil Fuels Production',
+    'Total Renewable Energy Production',
+    'Commercial_Consumption',
+    'Industrial_Consumption',
+    'Residential_Consumption',
+    'Month'
+]
+target = 'Total_CO2_Emissions'
+data_all = df[features + [target, 'Date']].dropna()
+```
+
+```{python}
+# normalize the data
+feature_scaler = MinMaxScaler()
+target_scaler = MinMaxScaler()
+
+data_scaled = data_all.copy()
+data_scaled[features] = feature_scaler.fit_transform(data_all[features])
+data_scaled[[target]] = target_scaler.fit_transform(data_all[[target]])
+
+# Construct sliding window samples
+def make_sequences(data, seq_len=12):
+    X, y, dates = [], [], []
+    for i in range(len(data) - seq_len):
+        X.append(data.iloc[i:i+seq_len][features].values)
+        y.append(data.iloc[i+seq_len][target])
+        dates.append(data.iloc[i+seq_len]['Date'])
+    return np.array(X), np.array(y), np.array(dates)
+
+seq_len = 24
+X_all, y_all, dates_all = make_sequences(data_scaled, seq_len)
+
+# train validation test set split
+train_end = pd.Timestamp("2020-12-31")
+valid_end = pd.Timestamp("2021-12-31")
+
+train_idx = dates_all <= train_end
+valid_idx = (dates_all > train_end) & (dates_all <= valid_end)
+test_idx = dates_all > valid_end
+
+X_train, y_train = X_all[train_idx], y_all[train_idx]
+X_valid, y_valid = X_all[valid_idx], y_all[valid_idx]
+X_test, y_test = X_all[test_idx], y_all[test_idx]
+```
+
+```{python}
+#| echo: true
+#| output: false
+ 
+
+def set_seed(seed=42):
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    random.seed(seed)
+    np.random.seed(seed)
+    tf.random.set_seed(seed)
+    tf.config.experimental.enable_op_determinism()
+
+set_seed(42)
+
+# Construct the model
+model = Sequential([
+    LSTM(128, return_sequences=True, input_shape=(X_train.shape[1], X_train.shape[2])),
+    Dropout(0.3),
+    LSTM(64),
+    Dense(1)
+])
+model.compile(optimizer='adam', loss='mse')
+
+early_stop = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+
+history = model.fit(
+    X_train, y_train,
+    validation_data=(X_valid, y_valid),
+    epochs=100,
+    batch_size=16,
+    callbacks=[early_stop],
+    verbose=0
+)
+```
+
+
+```{python}
+
+# loss function 
+plt.figure(figsize=(8, 5))
+plt.plot(history.history['loss'], label='Train Loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+plt.title("Loss Curve During Training")
+plt.xlabel("Epoch")
+plt.ylabel("MSE Loss")
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+```
+
+```{python}
+def predict_and_inverse(X, y, scaler):
+    y_pred = model.predict(X, verbose=0)
+    y_pred_inv = scaler.inverse_transform(y_pred.reshape(-1, 1))
+    y_true_inv = scaler.inverse_transform(y.reshape(-1, 1))
+    return y_true_inv, y_pred_inv
+
+y_train_inv, y_pred_train_inv = predict_and_inverse(X_train, y_train, target_scaler)
+y_valid_inv, y_pred_valid_inv = predict_and_inverse(X_valid, y_valid, target_scaler)
+y_test_inv,  y_pred_test_inv  = predict_and_inverse(X_test,  y_test,  target_scaler)
+
+# MSE evaluation for both training validation and prediction set
+def print_rmse(label, y_true, y_pred):
+    mse = mean_squared_error(y_true, y_pred)
+    rmse = np.sqrt(mse)
+    print(f"{label} MSE: {mse:.2f}, RMSE: {rmse:.2f}")
+    return rmse
+
+train_rmse = print_rmse("Train", y_train_inv, y_pred_train_inv)
+valid_rmse = print_rmse("Valid", y_valid_inv, y_pred_valid_inv)
+test_rmse  = print_rmse("Test",  y_test_inv,  y_pred_test_inv)
+```
+
+
+
+
+```{python}
+# Prediction on Test dataset
+plt.figure(figsize=(10, 6))
+plt.plot(dates_all[test_idx], y_test_inv, label='True')
+plt.plot(dates_all[test_idx], y_pred_test_inv, label='Predicted')
+plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+plt.gca().xaxis.set_major_locator(mdates.YearLocator())
+plt.title('LSTM Forecast (2022 and beyond)')
+plt.xlabel("Year")
+plt.ylabel("Total CO₂ Emissions")
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+
 ```
 
 # Result {#sec-result}
