@@ -133,7 +133,7 @@ From plot 1, we can say that from the early 1970s through 2005, total $CO_2$ emi
 
 By observing the ACF plot, we can conclude that the total $CO_2$ emission is non-stationary since the lag‑1 autocorrelation is essentially 1.0, and the ACF decays very slowly, confirming the presence of non-stationary mean in the series.
 
-## Model
+## Models
 
 To model the relationship between total $CO_2$ emissions and the set of covariates we picked:
 
@@ -159,7 +159,8 @@ $${y}_{t} = \sum^{6}_{j=1}\beta_{j} z_{tj} + x_t$$
 
 From this fit we can retain the residuals by $$\hat{x}_{t} = y_t-\sum^{r}_{j=1}\beta_{j} z_{tj}$$
 
-### Model 1
+After fitting the initial linear regression model, we examined the residuals to check for autocorrelation using autocorrelation (ACF) and partial autocorrelation (PACF) plots, as well as the Box-Ljung test. These diagnostics showed strong and persistent correlation patterns, indicating that the residuals were not independent over time.
+
 
 ```{r}
 #| label: tbl-model-summary
@@ -215,7 +216,6 @@ knitr::kable(coef_table, digits = 4)
 
 In our case, our model is $$y_t = 294.1+ 1.235z_{t1}- 38.07z_{t2}- 256.3z_{t3}+ 0.5023z_{t4}+ 0.1639z_{t5}+ 0.001546z_{t6}+ x_t$$
 
-
 ```{r}
 #| label: fig-model1-fittings
 #| echo: false
@@ -249,39 +249,35 @@ qqnorm(resid(model1), main = NULL)
 qqline(resid(model1), col = "red")
 ```
 
-In the scatter plot of residuals against the fitted values, there is no clear funnel or curvature, which suggests that the variance of the errors is roughly constant across the range of predicted $CO_2$ emissions.
+In the scatter plot of residuals against the fitted values (@fig-model1-fittings-1), there is no clear funnel or curvature, which suggests that the variance of the errors is roughly constant across the range of predicted $CO_2$ emissions.
 
-However, when we plot the residuals in time order, a pronounced seasonal “saw tooth” pattern emerges-residuals swing positive and negative in a regular annual pattern. This indicates that our purely cross-sectional predictors haven't captured the strong yearly cycle in emissions, and so that seasonality remains in the error term.
+However, when we plot the residuals in time order, a pronounced seasonal “saw tooth” pattern emerges-residuals swing positive and negative in a regular annual pattern (@fig-model1-fittings-2). This indicates that our purely cross-sectional predictors haven't captured the strong yearly cycle in emissions, and so that seasonality remains in the error term.
 
-The histogram of residuals is roughly symmetric around zero and appears approximately bell-shaped, albeit with mildly heavier tails than a perfect normal distribution.
+The histogram of residuals (@fig-model1-fittings-3) is roughly symmetric around zero and appears approximately bell-shaped, albeit with mildly heavier tails than a perfect normal distribution.
 
-The Q-Q plot confirms this: most points lie very close to the 45° line, indicating near-normality, but the extreme ends (both lower and upper tails) deviate slightly. In practice, these small departures from Gaussianity are unlikely to invalidate inference, especially once we explicitly model the autocorrelation and seasonality.
+The Q-Q plot (@fig-model1-fittings-4) confirms this: most points lie very close to the 45° line, indicating near-normality, but the extreme ends (both lower and upper tails) deviate slightly. In practice, these small departures from Gaussianity are unlikely to invalidate inference, especially once we explicitly model the autocorrelation and seasonality.
 
-Second, we examined the sample ACF and PACF of $\hat{x}_t$ to identify candidate ARMA(p,q) structures. Potential orders p and q were chosen by the usual cut-off and tail-off patterns in these plots. Finally we applied `forecast::auto.arima()` to select an appropriate ARIMA(p,d,q) model
+
+Then we examined the sample ACF and PACF of $\hat{x}_t$ to identify candidate ARMA(p,q) structures. Potential orders p and q were chosen by the usual cut-off and tail-off patterns in these plots. Finally we applied `forecast::auto.arima()` to select an appropriate ARIMA(p,d,q) model
 
 ```{r}
-#| label: fig-acf-model1
-#| fig-cap: "ACF of Residuals for Model 1"
+#| label: fig-model1-acfpacf
+#| fig-cap: "Model 1 ACF & PACF"
+#| fig-subcap: ["ACF of Residuals", "PACF of Residuals"]
 #| echo: false
 #| warning: false
 #| message: false
+#| layout-ncol: 2
 
 acf(resid(model1), main = "")
-```
-
-@fig-acf-model1 shows the autocorrelation of residuals from our linear model. We observe significant spikes at multiple lags, especially early ones, which exceed the blue dashed significance bands. This means the residuals are not independent over time, and there is clear serial correlation remaining in the model. This suggests that our linear model has not fully captured the temporal structure of the data.
-
-```{r}
-#| label: fig-pacf-model1
-#| fig-cap: "PACF of Residuals for Model 1"
-#| echo: false
-#| warning: false
-#| message: false
 
 pacf(resid(model1), main = "")
+
 ```
 
-@fig-pacf-model1 shows partial autocorrelations of the residuals. We see large spikes at the first few lags, indicating that past values have a direct influence on the current residuals, even after accounting for previous lags. This supports the idea that an autoregressive structure may still be present and needs to be modeled, possibly with an ARIMA or time series component.
+@fig-model1-acfpacf-1 shows the autocorrelation of residuals from our linear model. We observe significant spikes at multiple lags, especially early ones, which exceed the blue dashed significance bands. This means the residuals are not independent over time, and there is clear serial correlation remaining in the model. This suggests that our linear model has not fully captured the temporal structure of the data.
+
+@fig-model1-acfpacf-2 shows partial autocorrelations of the residuals. We see large spikes at the first few lags, indicating that past values have a direct influence on the current residuals, even after accounting for previous lags. This supports the idea that an autoregressive structure may still be present and needs to be modeled, possibly with an ARIMA or time series component.
 
 ```{r}
 #| label: tbl-model1-box
@@ -348,7 +344,21 @@ arima_metrics <- data.frame(
 knitr::kable(arima_metrics, digits = 4)
 ```
 
-The `auto.arima()` call picked an ARIMA(5,1,2) model on the OLS residuals $\hat{x}_t$. Concretely, letting $\nabla \hat{x}_t = \hat{x}_t - \hat{x}_{t-1}$, the fitted model is $$ (1 - 0.2594 B + 0.3250 B^2 + 0.0259 B^3 - 0.1480 B^4 + 0.1365 B^5)(1 - B)\hat x_t = (1 - 0.2066 B - 0.6959 B^2)w_t$$ where B is the backshift operator and $w_t$ is white noise with estimated $\sigma^2(w_t) = 468.3$. AIC of 5178.1 confirms this is the most parsimonious high-order fit `auto.arima` found, and the small training-set ACF1 ($\approx 0.028$) suggests remaining serial dependence is minimal after differencing and fitting these parameters.
+To address issues mentioned above, we applied an ARIMA model to the residuals from our linear regression. We used the `auto.arima()` function to select the best-fitting ARIMA model for the residuals. More details and results are presented in @sec-res.
+
+We also decided to explore a machine learning approach using a Long Short-Term Memory (LSTM) neural network. LSTM is well-suited for sequential data and can capture long-term temporal dependencies without requiring stationarity. The model was trained... To Be Added
+
+
+
+Full implementation details and evaluation results are provided in @sec-res.
+
+
+
+# Result {#sec-result}
+
+## Model 1
+
+Continuing with Method section, our `auto.arima()` call picked an ARIMA(5,1,2) model on the OLS residuals $\hat{x}_t$. Concretely, letting $\nabla \hat{x}_t = \hat{x}_t - \hat{x}_{t-1}$, the fitted model is $$ (1 - 0.2594 B + 0.3250 B^2 + 0.0259 B^3 - 0.1480 B^4 + 0.1365 B^5)(1 - B)\hat x_t = (1 - 0.2066 B - 0.6959 B^2)w_t$$ where B is the backshift operator and $w_t$ is white noise with estimated $\sigma^2(w_t) = 468.3$. AIC of 5178.1 confirms this is the most parsimonious high-order fit `auto.arima` found, and the small training-set ACF1 ($\approx 0.028$) suggests remaining serial dependence is minimal after differencing and fitting these parameters.
 
 ```{r}
 #| label: tbl-arima-coef
@@ -375,8 +385,6 @@ arima_coef_table <- data.frame(
 # Display
 knitr::kable(arima_coef_table)
 ```
-
-
 
 ```{r}
 #| label: fig-model1-combine-fit-actual
@@ -456,16 +464,14 @@ model_comparison <- data.frame(
 knitr::kable(model_comparison, digits = 4)
 ```
 
-
-
 ```{r}
 #| label: fig-rss-rmse-comparison
 #| echo: false
 #| warning: false
 #| message: false
 #| fig-cap: "RSS and RMSE Comparison of Linear vs. Linear + ARIMA Models"
-#| fig-height: 4
-#| fig-width: 6
+#| fig-height: 7
+#| fig-width: 10
 
 # Predict data adter 2020
 pred_result <- predict(model1, newdata = data_test, interval = "prediction", level = 0.95)
@@ -495,7 +501,9 @@ legend("topright",
 
 @fig-rss-rmse-comparison shows how well the combined Linear + ARIMA model predicts $CO_2$ emissions for the years 2021 to 2025. The black line represents the actual observed emissions, while the solid blue line shows the model’s predicted values, and the dashed blue lines indicate the 95% prediction interval. The predicted values follow the seasonal ups and downs of the observed data quite closely, staying mostly within the prediction bounds. This suggests that the model is effective at capturing both the trend and seasonal patterns in the data.
 
-### Model 2
+
+
+## Model 2
 
 ```{r}
 #| label: fig-loss-curve
@@ -527,9 +535,9 @@ ggplot() +
 
 @fig-forecast compares the model’s predicted $CO_2$ emissions (in orange) with the actual true emissions (in blue) for the years after 2022. The two lines follow very similar patterns, showing that the model has learned the seasonal trends in the data. Although the predicted values are not exactly the same as the true values, they are close and show the same ups and downs. This suggests the model is able to capture important patterns over time, like seasonal cycles. The small differences between the predicted and actual values are expected and acceptable. In general, the forecast shows that the LSTM model performs well in predicting future $CO_2$ emissions.
 
-# Result {#sec-result}
 
 
+\newpage
 
 # Discussion {#sec-discussion}
 
