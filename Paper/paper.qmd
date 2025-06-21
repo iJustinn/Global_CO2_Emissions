@@ -301,7 +301,7 @@ box_test_table <- data.frame(
 knitr::kable(box_test_table)
 ```
 
-The Box-Ljung test (@tbl-model1-box) checks whether residuals are independently distributed. Here, the test statistic is 967.69 with 20 degrees of freedom, and the p-value is less than 0.001. This result strongly rejects the null hypothesis of no autocorrelation, confirming that the residuals still contain time-dependent patterns and the current model is insufficient to capture them.
+The Ljung-Box test (@tbl-model1-box) checks whether residuals are independently distributed. Here, the test statistic is 967.69 with 20 degrees of freedom, and the p-value is less than 0.001. This result strongly rejects the null hypothesis of no autocorrelation, confirming that the residuals still contain time-dependent patterns and the current model is insufficient to capture them.
 
 ```{r}
 #| label: tbl-model1-auto-arima
@@ -518,7 +518,7 @@ ggplot() +
 
 ```
 
-@fig-loss-curve shows how the model's error changes over time during training. Specifically, it plots the Mean Squared Error (MSE) for both the training and validation data across 40 epochs. At the beginning, both training and validation losses are relatively high, especially the training loss. As training progresses, both losses gradually decrease. This means the model is learning and improving its accuracy over time. Around the middle of the training, the validation loss starts to follow the same trend as the training loss and eventually becomes even lower. This is a good sign, showing that the model is not overfitting and is able to generalize well to unseen data. Overall, the loss curve shows that the model training was successful and well-regularized.
+@fig-loss-curve shows how the model's error changes over time during training. Specifically, it plots the Mean Squared Error (MSE) for both the training and validation data across 40 epochs. At the beginning, both training and validation losses are relatively high, especially the training loss. As training progresses, both losses gradually decrease. This means the model is learning and improving its accuracy over time. Around the middle of the training, the validation loss starts to follow the same trend as the training loss and eventually becomes even lower. This is a good sign, showing that the model is not overfitting and is able to generalize well to unseen data. Overall, the loss curve shows that the model training was successful and well-regularized. The training process is automatically stopped after 40 epochs due to the early stopping mechanism. This happens when further improvement in validation loss becomes negligible.
 
 ```{r}
 #| label: fig-forecast

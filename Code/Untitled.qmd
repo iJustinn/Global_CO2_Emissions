@@ -42,6 +42,9 @@ target = 'Total_CO2_Emissions'
 data_all = df[features + [target, 'Date']].dropna()
 ```
 
+To prepare for modeling, Year and Month are converted and combined into a single column in datetime format. Key features related to $CO_2$ emissions are then selected. This includes energy consumption and production metrics.
+
+
 ```{python}
 # normalize the data
 feature_scaler = MinMaxScaler()
@@ -75,6 +78,11 @@ X_train, y_train = X_all[train_idx], y_all[train_idx]
 X_valid, y_valid = X_all[valid_idx], y_all[valid_idx]
 X_test, y_test = X_all[test_idx], y_all[test_idx]
 ```
+
+
+MinMax normalization is applied to both the features and the target variable to address the scale sensitivity issue in LSTM model. Input sequences are generated using sliding windows, where each sample contains 24 months of historical data to predict the $CO_2$ emission of the following month. Next, we split the data into training validation and testing dataset. In this case, data before 2021 is used for training, data from 2021 is used for validation and data from 2022 ahead is used for testing and prediction,
+
+
 
 ```{python}
 #| echo: true
@@ -111,6 +119,7 @@ history = model.fit(
 )
 ```
 
+Then, the random seed is set to make results repeatable.  A two-layer LSTM model with dropout layers is constructed to reduce overfitting. A dense layer is used to output the final $CO_2$ emission prediction. An early stopping mechanism is applied in the training when the improvement in validation loss remains below a certain threshold for several consecutive epochs. This helps prevent overfitting.
 
 ```{python}
 
