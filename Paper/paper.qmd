@@ -102,11 +102,12 @@ ggplot(data_zoom, aes(x = Date, y = Total_CO2_Emissions)) +
 
 ```
 
-The cleaned dataset is constructed by concatenating monthly U.S. data from different categories. It includes energy production, sectoral energy use, transportation fuel use, and $CO_2$ emissions.   Emissions from other sources are aggregated by date, and the total emissions across all sectors are calculated. Additional statistics on petroleum consumption, fossil fuel and renewable energy output, and residential, commercial, and industrial energy consumption are merged after standardized Year and Month variables have been extracted. All datasets are joined in year and month.
+The cleaned dataset is constructed by concatenating monthly U.S. data from different categories. It includes energy production, sectoral energy use, transportation fuel use, and $CO_2$ emissions. Emissions from other sources are aggregated by date, and the total emissions across all sectors are calculated. Additional statistics on petroleum consumption, fossil fuel and renewable energy output, and residential, commercial, and industrial energy consumption are merged after standardized Year and Month variables have been extracted. All datasets are joined in year and month.
 
 The resulting dataset captures key indicators such as total $CO_2$ emissions (million metric tons), transportation petroleum consumption (million barrels per day), total fossil fuel and renewable energy output (quadrillion Btu), and sectoral energy consumption (trillion Btu). Units adhere to the conventions of the Monthly Energy Review, with energy metrics predominantly expressed in U.S. customary units—such as Btu for energy and barrels for petroleum volumes—and emissions in metric units.
 
 From plot 1, we can say that total CO2 emissions have a clear upward trend from the early 1970s through 2005 and then a decay from 2005 to the present. The sharp dip around 2020 likely reflects the economic slowdown during the COVID‑19 pandemic. During this period, widespread lockdowns resulted in a significant reduction in transportation, industrial activity, and fossil fuel consumption, which contributed to the observed decline in emissions.
+
 The ACF plot shows that the total CO2 emission is non-stationary since the lag‑1 autocorrelation is significant and the ACF decays very slowly. This confirms the presence of a non-stationary mean in the series.
 
 ```{r}
@@ -125,7 +126,6 @@ acf_obj <- acf(co2_ts, plot = FALSE)
 # Manually plot it without a title
 plot(acf_obj, main = "")
 ```
-
 
 Key variables included in the cleaned dataset are total $CO_2$ emissions (million metric tons), transportation petroleum consumption (million barrels per day), total fossil fuels production and total renewable energy production (quadrillion British thermal units \[Btu\]), and sectoral energy consumption in the commercial, industrial, and residential sectors (trillion Btu). Units adhere to the conventions of the Monthly Energy Review, with energy metrics predominantly expressed in U.S. customary units—such as Btu for energy and barrels for petroleum volumes—and emissions in metric units.
 
@@ -344,13 +344,11 @@ arima_metrics <- data.frame(
 knitr::kable(arima_metrics, digits = 4)
 ```
 
-To address issues mentioned above, we applied an ARIMA model to the residuals from our linear regression. We used the `auto.arima()` function to select the best-fitting ARIMA model for the residuals. More details and results are presented in @sec-res.
+To address issues mentioned above, we applied an **ARIMA model** to the residuals from our linear regression. We used the `auto.arima()` function to select the best-fitting ARIMA model for the residuals. More details and results are presented in @sec-result
 
-We also decided to explore a machine learning approach using a Long Short-Term Memory (LSTM) neural network. LSTM is well-suited for sequential data and can capture long-term temporal dependencies without requiring stationarity. The model was trained... To Be Added
+We also explored a machine learning approach by using a **Long Short-Term Memory (LSTM)** neural network. LSTM models are particularly good at handling sequential data because they can effectively capture long-term patterns without needing the data to be stationary. To better fits the need of this model, Year and Month are converted and combined into a single column in datetime format. Key features related to $CO_2$ emissions are then selected. This includes energy consumption and production metrics. Moreover, we applied MinMax normalization to both the features and the target variable to manage scale differences to ensure the LSTM performs optimally.
 
-
-
-Full implementation details and evaluation results are provided in @sec-res.
+We then created input sequences using a sliding window approach, where each sequence includes 24 months of historical data to predict the $CO_2$ emissions of the next month. After preparing the data, we split it into three sets: training, validation, and testing. Specifically, data before 2021 was used for training, data from 2021 served as the validation set, and data from 2022 onward was used for testing and prediction. To ensure consistent and reproducible results, we set a random seed before training the model. Our final model included two LSTM layers with dropout layers added to reduce overfitting, followed by a dense layer that provided the final $CO_2$ emission predictions. Additionally, we applied an early stopping mechanism during training, which stops the process if improvements in validation loss become negligible over consecutive epochs. This further helps prevent overfitting and improves the reliability of the model. Full evaluation of results are provided in @sec-result
 
 
 
@@ -470,7 +468,7 @@ knitr::kable(model_comparison, digits = 4)
 #| warning: false
 #| message: false
 #| fig-cap: "RSS and RMSE Comparison of Linear vs. Linear + ARIMA Models"
-#| fig-height: 7
+#| fig-height: 6
 #| fig-width: 10
 
 # Predict data adter 2020
@@ -541,7 +539,15 @@ ggplot() +
 
 # Discussion {#sec-discussion}
 
+## subpoint 1
 
+## subpoint 2
+
+## subpoint 3
+
+
+
+\newpage
 
 # Appendix
 
