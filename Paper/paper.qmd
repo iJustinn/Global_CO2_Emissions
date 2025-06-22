@@ -116,9 +116,9 @@ The cleaned dataset is constructed by concatenating monthly U.S. data from diffe
 
 The resulting dataset captures key indicators such as total $CO_2$ emissions (million metric tons), transportation petroleum consumption (million barrels per day), total fossil fuel and renewable energy output (quadrillion British Thermal Units \[BTU\]), and sectoral energy consumption (trillion BTU). Units adhere to the conventions of the Monthly Energy Review, with energy metrics predominantly expressed in U.S. customary units — such as BTU for energy and barrels for petroleum volumes — and emissions in metric units.
 
-From plot 1, we can say that total $CO_2$ emissions have a clear upward trend from the early 1970s through 2005 and then a decay from 2005 to the present. The sharp dip around 2020 likely reflects the economic slowdown during the COVID‑19 pandemic. During this period, widespread lockdowns resulted in a significant reduction in transportation, industrial activity, and fossil fuel consumption, which contributed to the observed decline in emissions.
+From @fig-summary-1, we can say that total $CO_2$ emissions have a clear upward trend from the early 1970s through 2005 and then a decay from 2005 to the present. The sharp dip around 2020 likely reflects the economic slowdown during the COVID‑19 pandemic. During this period, widespread lockdowns resulted in a significant reduction in transportation, industrial activity, and fossil fuel consumption, which contributed to the observed decline in emissions.
 
-The ACF plot shows that the total $CO_2$ emission is non-stationary since the lag‑1 autocorrelation is significant and the ACF decays very slowly. This confirms the presence of a non-stationary mean in the series.
+The ACF plot (@fig-summary-2) shows that the total $CO_2$ emission is non-stationary since the lag‑1 autocorrelation is significant and the ACF decays very slowly. This confirms the presence of a non-stationary mean in the series.
 
 ```{r}
 #| label: fig-summary-2
@@ -165,6 +165,8 @@ $${y}_{t} = \sum^{6}_{j=1}\beta_{j} z_{tj} + x_t$$
 From this fit we can retain the residuals by $$\hat{x}_{t} = y_t-\sum^{r}_{j=1}\beta_{j} z_{tj}$$
 
 After fitting the initial linear regression model, we examined the residuals to check for autocorrelation using autocorrelation (ACF) and partial autocorrelation (PACF) plots, as well as the Box-Ljung test. These diagnostics showed strong and persistent correlation patterns, indicating that the residuals were not independent over time.
+
+\newpage
 
 ```{r}
 #| label: tbl-model-summary
@@ -361,7 +363,7 @@ We then created input sequences using a sliding window approach, where each sequ
 
 # Result {#sec-result}
 
-## Model 1
+## ARIMA Model
 
 Continuing with Method section, our `auto.arima()` call picked an ARIMA(5,1,2) model on the OLS residuals $\hat{x}_t$. Concretely, letting $\nabla \hat{x}_t = \hat{x}_t - \hat{x}_{t-1}$, the fitted model is $$ (1 - 0.2594 B + 0.3250 B^2 + 0.0259 B^3 - 0.1480 B^4 + 0.1365 B^5)(1 - B)\hat x_t = (1 - 0.2066 B - 0.6959 B^2)w_t$$ where B is the backshift operator and $w_t$ is white noise with estimated $\sigma^2(w_t) = 468.3$. AIC of 5178.1 confirms this is the most parsimonious high-order fit `auto.arima` found, and the small training-set ACF1 ($\approx 0.028$) suggests remaining serial dependence is minimal after differencing and fitting these parameters.
 
@@ -478,7 +480,7 @@ knitr::kable(model_comparison, digits = 4)
 #| warning: false
 #| message: false
 #| fig-cap: "RSS and RMSE Comparison of Linear vs. Linear + ARIMA Models"
-#| fig-height: 6
+#| fig-height: 7
 #| fig-width: 10
 
 # Predict data adter 2020
@@ -508,13 +510,11 @@ legend("topright",
 
 ```
 
-\newpage
-
 @fig-rss-rmse-comparison shows how well the combined Linear + ARIMA model predicts $CO_2$ emissions for the years 2021 to 2025. The black line represents the actual observed emissions, while the solid blue line shows the model’s predicted values, and the dashed blue lines indicate the 95% prediction interval. The predicted values closely follow the seasonal ups and downs of the observed data, staying mostly within the prediction bounds. This suggests the model is effective at capturing both the trend and seasonal patterns in the data.
 
 
 
-## Model 2
+## LSTM Model
 
 ```{r}
 #| label: fig-loss-curve
