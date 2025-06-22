@@ -1,15 +1,15 @@
 ---
-title: "project title"
-subtitle: "project subtitle"
+title: "Modeling and Forecasting U.S. $CO_2$ Emissions"
+subtitle: "Integrating ARIMA and LSTM Approaches to Capture Seasonal and Temporal Dynamics"
 author: 
-  - a
+  - Alex Wang
   - Jiacan Sun
   - Kevin You
   - Ziheng Zhong
 thanks: "Code and data supporting this analysis is available at: [Link to repository](https://github.com/iJustinn/Global_CO2_Emissions.git)."
 date: today
 date-format: long
-abstract: ""
+abstract: "This paper analyzes monthly U.S. $CO_2$ emissions from 1973 to 2025 using linear regression enhanced by ARIMA and LSTM models to capture seasonal and temporal dependencies. We identify key drivers of emissions, such as transportation petroleum and renewable energy production, and illustrate significant forecasting improvements from integrating autoregressive methods. Results underscore the importance of accounting for time-series structures and suggest hybrid models provide more accurate predictions essential for informed environmental policy-making."
 format: pdf
 toc: true
 number-sections: true
@@ -34,14 +34,10 @@ library(astsa)
 library(here)
 
 # load data
-
-
-# load model
-
+data <- read.csv("../Data/cleaned_data.csv")
 
 ```
 
-\newpage
 
 # Introduction
 
@@ -51,7 +47,7 @@ The motivation for this research is grounded in climate and energy policy releva
 
 This paper will analyze monthly data from the U.S. Energy Information Administration [@citeDataEIA], focusing on trends in energy consumption and production across major sectors. Our response variable is total $CO_2$ emissions, modeled as a function of six key predictors: transportation petroleum consumption, fossil fuel production, renewable energy generation, and energy consumption by the commercial, industrial, and residential sectors. Given the temporal nature of the data, we employ an ARIMA model and XXX, which will be discussed in more detail later. These two modeling approach allows us to assess both the cross-sectional and time-dependent dynamics influencing emissions, also enabling us to do forecasting .
 
-The paper is structured as follows: @sec-method TBD, @sec-result TBD, @sec-discussion TBD.
+The paper is structured as follows: @sec-method describes our data sources, preprocessing steps, and modeling approaches including ARIMA and LSTM techniques; @sec-result presents the results of our models along with diagnostic checks and forecast evaluations; @sec-discussion discusses implications, limitations, and potential future improvements based on our findings.
 
 # Method {#sec-method}
 
@@ -68,9 +64,6 @@ The dataset [@citeDataEIA] is sourced from the the U.S. Energy Information Admin
 #| layout-ncol: 2
 #| fig-cap: "Data Overview"
 #| fig-subcap: ["Total CO2 Emissions Over Time", "Total CO2 Emissions (2015–2020)"]
-
-data <- read.csv("../Data/cleaned_data.csv")
-
 
 data <- data %>%
   mutate(
@@ -125,6 +118,7 @@ acf_obj <- acf(co2_ts, plot = FALSE)
 
 # Manually plot it without a title
 plot(acf_obj, main = "")
+
 ```
 
 Key variables included in the cleaned dataset are total $CO_2$ emissions (million metric tons), transportation petroleum consumption (million barrels per day), total fossil fuels production and total renewable energy production (quadrillion British thermal units \[Btu\]), and sectoral energy consumption in the commercial, industrial, and residential sectors (trillion Btu). Units adhere to the conventions of the Monthly Energy Review, with energy metrics predominantly expressed in U.S. customary units—such as Btu for energy and barrels for petroleum volumes—and emissions in metric units.
@@ -247,6 +241,7 @@ hist(resid(model1),
 # Residuals satisfied identical normal distribution
 qqnorm(resid(model1), main = NULL)
 qqline(resid(model1), col = "red")
+
 ```
 
 In the scatter plot of residuals against the fitted values (@fig-model1-fittings-1), there is no clear funnel or curvature, which suggests that the variance of the errors is roughly constant across the range of predicted $CO_2$ emissions.
@@ -299,6 +294,7 @@ box_test_table <- data.frame(
 
 # Display the table
 knitr::kable(box_test_table)
+
 ```
 
 The Ljung-Box test (@tbl-model1-box) checks whether residuals are independently distributed. Here, the test statistic is 967.69 with 20 degrees of freedom, and the p-value is less than 0.001. This result strongly rejects the null hypothesis of no autocorrelation, confirming that the residuals still contain time-dependent patterns and the current model is insufficient to capture them.
@@ -342,6 +338,7 @@ arima_metrics <- data.frame(
 
 # Display the table
 knitr::kable(arima_metrics, digits = 4)
+
 ```
 
 To address issues mentioned above, we applied an **ARIMA model** to the residuals from our linear regression. We used the `auto.arima()` function to select the best-fitting ARIMA model for the residuals. More details and results are presented in @sec-result
@@ -382,6 +379,7 @@ arima_coef_table <- data.frame(
 
 # Display
 knitr::kable(arima_coef_table)
+
 ```
 
 ```{r}
@@ -433,6 +431,7 @@ legend("topright",
        lwd = 2,
        cex = 1.1,
        bty = "n")
+
 ```
 
 @fig-model1-combine-fit-actual compares the performance of two models in capturing U.S. $CO_2$ emissions over time. In both plots, the black line represents the observed emissions, while the red line shows the model predictions. @fig-model1-combine-fit-actual-1 shows the combined model (linear + ARIMA), which closely follows the seasonal and long-term trends, especially in the mid and later periods. @fig-model1-combine-fit-actual-2 displays the linear model alone, which captures the overall trend but misses the recurring seasonal spikes and dips.
@@ -460,6 +459,7 @@ model_comparison <- data.frame(
 
 # Display the table
 knitr::kable(model_comparison, digits = 4)
+
 ```
 
 ```{r}
@@ -495,6 +495,7 @@ legend("topright",
        lwd = 2,
        cex = 1.1,
        bty = "n")
+
 ```
 
 @fig-rss-rmse-comparison shows how well the combined Linear + ARIMA model predicts $CO_2$ emissions for the years 2021 to 2025. The black line represents the actual observed emissions, while the solid blue line shows the model’s predicted values, and the dashed blue lines indicate the 95% prediction interval. The predicted values follow the seasonal ups and downs of the observed data quite closely, staying mostly within the prediction bounds. This suggests that the model is effective at capturing both the trend and seasonal patterns in the data.
@@ -539,13 +540,31 @@ ggplot() +
 
 # Discussion {#sec-discussion}
 
-## subpoint 1
+Our research used both linear regression and ARIMA models to analyze and forecast monthly U.S. $CO_2$ emissions based on dominant sectors of greenhouse gas emissions. Our results show that while a linear regression model does explain much of the variation in emissions, the ACF and PACF plots of the residuals from the model suggest there is serial correlation of the errors. The linear model clearly does not account for the temporal structure of the data. Therefore, incorporating the time series structure into our model using an ARIMA model significantly improves on this aspect. Residuals are more likely to be independent, and our forecasts are more accurate due to the model accounting for factors like autocorrelation and seasonality. We discuss these differences below.
 
-## subpoint 2
+## Implications of Linear Regression Model
 
-## subpoint 3
+Our linear model identified 6 key predictors, 5 of which are statistically significant, that drive total $CO_2$ emissions. Of the statistically significant predictors, transportation petroleum consumption exhibits a strong positive relationship with emissions, which is consistent with the industry’s carbon emission expectations. Furthermore, commercial and industrial energy consumption also have positive effects with significant p-values, with coefficients that align with their respective industry expectations. These results validate the inclusion of these sectors as relevant predictors for our model.
 
+However, fossil fuel production and renewable energy production both show large and statistically significant negative relationships with total emissions. The coefficient for renewable energy is approximately -256, which supports the idea that renewable energy greatly reduces emissions. The negative coefficient for fossil fuel production, which is approximately -38, seems counterintuitive, as it is generally understood that fossil fuel production directly releases many $CO_2$ emissions into the atmosphere. Assuming a linear model, the only explanations could be that increased fossil fuel production results in increased exports of further $CO_2$ emitting products, or the actual process of producing fossil fuels uses renewable energy, both of which are unlikely. Residential energy consumption exhibits a small, positive, but statistically insignificant relationship with emissions. This suggests that residential consumption has limited marginal contribution in total emissions, or that it could offset seasonal dynamics.
 
+## Implications
+
+Our results demonstrate the importance of incorporating temporal factors into environmental forecasting models, especially for time series data. Only relying on cross-sectional, linear regressors in our model fails to account for the strong autocorrelation and seasonality persistent in emissions data. Our results suggest that the hybrid approaches, where temporal factors are captured in the ARIMA model, are better suited for forecasting $CO_2$ emissions.
+
+Previous literature has also analyzed the importance of combining different models and exploring nonlinear relationships on emissions, such as using the Stochastic Impacts by Regression on Population, Affluence, and Technology (STIRPAT) model (Fan et al. 2006). Here, environmental impact is taken to be a combination of a product of IPAT factors (population, affluence, and technology), while also incorporating a stochastic element that allows for a more flexible regression.
+
+Furthermore, while not directly modelling emissions, energy demand has shown to be well-modelled using a mixture of ARIMA, SARIMA, GARCH, and ARMAX (ARMA with exogenous inputs) frameworks (Suganthi et al. 2012). Several of the identified regressors are strongly correlated with total energy demand, as basic economic frameworks suggest that the demand and supply for energy should be very similar. Most energy consumption, especially from fossil fuels, directly results in $CO_2$ emissions, so the factors that affect energy demand may also carry over to emissions. As these models seem to accurately capture real-world effects in their forecasts, it could prove to be useful to incorporate these ideas into future studies.
+
+In practical terms, understanding the factors that go into $CO_2$ emissions and energy production is relevant to modern-day governmental policy. Accurate forecasts can help policymakers evaluate the expected environmental impact of legislation relating to urgent issues such as fuel efficiency, corporate emissions, and the ‘carbon emissions market’, which is gaining traction as governments worldwide are increasing their efforts to reduce climate change. Forecasts that correctly account for seasonal, environmental, and other policy shocks across time can directly lead to better carbon pricing models that are responsive to those shocks. Therefore, as emissions forecasting becomes increasingly important for meeting emissions and environmental targets, analyzing more flexible models which better account for temporal factors will be essential for effective policy design and the future of the environment.
+
+## Limitations & Improvements
+
+Our current model still has a few limitations. Firstly, the model is based on historical linear patterns and cannot fully account for the shocks caused by governmental policy, nonlinear effects, or other exogenous shocks like the pandemic or potential wars. Next, while ARIMA models do capture serial dependence, it assumes stationarity after enough differencing and does not account for conditional heteroskedasticity, which a GARCH-style model would. Finally, our analysis combines emissions across all U.S. regions and sectors, which could potentially misrepresent other industry-specific patterns as a result.
+
+As seen in the previous studies, our models could incorporate seasonal ARIMA (SARIMA) models to better capture seasonality, giving us a better understanding of the seasonal patterns, which could better address these problems in the future. Furthermore, generalized autoregressive conditional heteroskedasticity (GARCH) models to better capture conditional volatility in $CO_2$ emissions could help explain the effects of unpredictable shocks. Alternatively, the STIRPAT model, which is also commonly used, could be helpful for environmental forecasting. Finally, potentially exploring other machine learning techniques in addition to the ones above could further improve and optimize $CO_2$ emissions models.
+
+Our integrated linear and ARIMA modeling approach gives us a strong foundation for forecasting U.S. $CO_2$ emissions. We have demonstrated the value of accounting for the temporal factors in environmental data. Our model gives forecasts without excessive model complexity and avoids overfitting, which are both risks of using the previously mentioned models. Our analysis gives us a great baseline for future work, potentially using more advanced models. It also highlights the need for continued improvements and progress in environmental forecasting to achieve accurate, data-driven climate policy.
 
 \newpage
 
@@ -553,7 +572,437 @@ ggplot() +
 
 ## Project Code
 
+### R
 
+```{r project R code}
+#| eval: false
+#| echo: true
+
+#### R Code Part ####
+
+# load library
+library(tidyverse)
+library(lubridate)
+library(gridExtra)
+library(forecast)
+library(ggplot2)
+library(knitr)
+library(readr)
+library(dplyr)
+library(astsa)
+library(here)
+
+# load data
+data <- read.csv("../Data/cleaned_data.csv")
+
+
+data <- data %>%
+  mutate(
+    Date = as.Date(paste(Year, Month, "1", sep = "-"), format = "%Y-%m-%d")
+  )
+
+ggplot(data, aes(x = Date, y = Total_CO2_Emissions)) +
+  geom_line(size = 1) +
+  labs(
+    x     = "Date",
+    y     = "Total CO2 Emissions (million metric tons)"
+  ) +
+  theme_minimal()
+
+
+data_zoom <- data %>%
+  filter(Date >= as.Date("2015-01-01") & Date <= as.Date("2022-12-31"))
+
+
+ggplot(data_zoom, aes(x = Date, y = Total_CO2_Emissions)) +
+  geom_line(size = 1) +
+  labs(
+    title = "Total CO2 Emissions (2015–2022)",
+    x     = "Date",
+    y     = "Total CO2 Emissions (million metric tons)"
+  ) +
+  theme_minimal() +
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y")  
+
+# Convert to time series first
+co2_ts <- ts(data$Total_CO2_Emissions)
+
+# Generate ACF object without plotting
+acf_obj <- acf(co2_ts, plot = FALSE)
+
+# Manually plot it without a title
+plot(acf_obj, main = "")
+
+data_train <- data[data$Year <= 2020, ]
+data_test  <- data[data$Year > 2020, ]
+
+model1 <- lm(
+  Total_CO2_Emissions ~ . 
+    - Date - Year - Month,
+  data = data_train
+)
+
+model_summary <- summary(model1)
+
+# Convert coefficients to a data frame
+coef_table <- as.data.frame(coef(model_summary))
+
+# Add row names as a column
+coef_table$Variable <- rownames(coef_table)
+rownames(coef_table) <- NULL
+
+# Reorder
+coef_table <- coef_table[, c("Variable", "Estimate", "Std. Error", "t value", "Pr(>|t|)")]
+
+# Shorten variable names using a named vector
+var_names <- c(
+  "(Intercept)" = "(Intercept)",
+  "Transportarion.Petroleum.Consumption" = "Transportation",
+  "Total.Fossil.Fuels.Production" = "Fossil Fuel Prod.",
+  "Total.Renewable.Energy.Production" = "Renewable Energy Prod.",
+  "Commercial_Consumption" = "Commercial",
+  "Industrial_Consumption" = "Industrial",
+  "Residential_Consumption" = "Residential"
+)
+
+# Apply shortened names
+coef_table$Variable <- var_names[coef_table$Variable]
+
+# Add significance codes (optional, mimicking base R behavior)
+coef_table$Significance <- cut(coef_table$`Pr(>|t|)`,
+                               breaks = c(-Inf, 0.001, 0.01, 0.05, 0.1, Inf),
+                               labels = c("***", "**", "*", ".", ""))
+
+# Display the table
+knitr::kable(coef_table, digits = 4)
+
+plot(model1$fitted.values, resid(model1),
+     xlab = "Fitted Values",
+     ylab = "Residuals")
+abline(h = 0, col = "red")
+
+plot(data_train$Date, resid(model1),
+     type = "l",
+     xlab = "Date",
+     ylab = "Residuals")
+abline(h = 0, col = "red")
+
+hist(resid(model1),
+     breaks = 30,
+     main = NULL,
+     xlab = "Residuals")
+
+# Residuals satisfied identical normal distribution
+qqnorm(resid(model1), main = NULL)
+qqline(resid(model1), col = "red")
+
+acf(resid(model1), main = "")
+
+pacf(resid(model1), main = "")
+
+# ljung-box test shows that the residuals are auto-correlated
+ljung_result <- Box.test(resid(model1), lag = 20, type = "Ljung-Box")
+
+# Create table from the output
+box_test_table <- data.frame(
+  `Test`       = "Box-Ljung",
+  `Statistic`  = round(ljung_result$statistic, 2),
+  `df`         = ljung_result$parameter,
+  `p-value`    = format.pval(ljung_result$p.value, digits = 3, eps = .001)
+)
+
+# Display the table
+knitr::kable(box_test_table)
+
+# auto fitted arima
+resid_ts <- ts(resid(model1))
+resid_arima <- forecast::auto.arima(resid_ts)
+
+# Extract summary metrics
+arima_summary <- summary(resid_arima)
+
+# Get training accuracy metrics separately
+train_metrics <- accuracy(resid_arima)
+
+# Build a combined table
+arima_metrics <- data.frame(
+  Metric = c("Sigma²", "Log Likelihood", "AIC", "AICc", "BIC",
+             "ME", "RMSE", "MAE", "MPE", "MAPE", "MASE", "ACF1"),
+  Value = c(
+    arima_summary$sigma2,
+    arima_summary$loglik,
+    arima_summary$aic,
+    arima_summary$aicc,
+    arima_summary$bic,
+    train_metrics[1, "ME"],
+    train_metrics[1, "RMSE"],
+    train_metrics[1, "MAE"],
+    train_metrics[1, "MPE"],
+    train_metrics[1, "MAPE"],
+    train_metrics[1, "MASE"],
+    train_metrics[1, "ACF1"]
+  )
+)
+
+# Display the table
+knitr::kable(arima_metrics, digits = 4)
+
+# Fit ARIMA model
+resid_ts <- ts(resid(model1))
+resid_arima <- forecast::auto.arima(resid_ts)
+
+# Extract coefficients and standard errors
+coef_vals <- coef(resid_arima)
+se_vals <- sqrt(diag(resid_arima$var.coef))
+
+# Create table
+arima_coef_table <- data.frame(
+  Term = names(coef_vals),
+  Estimate = round(coef_vals, 4),
+  Std_Error = round(se_vals, 4)
+)
+
+# Display
+knitr::kable(arima_coef_table)
+
+y_hat_lm <- fitted(model1) 
+
+resid_hat_arima <- fitted(resid_arima)
+y_hat_combined <- y_hat_lm + resid_hat_arima
+
+plot(data_train$Date, data_train$Total_CO2_Emissions, type = "l", col = "black", lwd = 2,
+     ylab = "Total CO2 Emissions (million metric tons)",
+     xlab = "Date",
+     cex.lab = 1.2, cex.main = 1.4)
+
+lines(data_train$Date, y_hat_combined, col = "red", lwd = 2)
+
+legend("topright",
+       legend = c("Observed", "LM + ARIMA Fit"),
+       col = c("black", "red"),
+       lty = 1,
+       lwd = 2,
+       cex = 1.1,
+       bty = "n") 
+
+
+
+y_true <- data_train$Total_CO2_Emissions
+y_lm   <- fitted(model1)
+
+plot(data_train$Date, y_true, type = "l", col = "black", lwd = 2,
+     ylab = "Total CO2 Emissions (million metric tons)",
+     xlab = "Date",
+     cex.lab = 1.2, cex.main = 1.4)
+
+lines(data_train$Date, y_lm, col = "red", lwd = 2)
+
+legend("topright",
+       legend = c("Observed", "Linear Model Fit"),
+       col = c("black", "red"),
+       lty = 1,
+       lwd = 2,
+       cex = 1.1,
+       bty = "n")
+
+# Compute RSS and RMSE if not already done
+rss_lm <- sum((y_true - y_lm)^2)
+rss_combined <- sum((y_true - y_hat_combined)^2)
+
+rmse_lm <- sqrt(mean((y_true - y_lm)^2))
+rmse_combined <- sqrt(mean((y_true - y_hat_combined)^2))
+
+# Create a comparison table
+model_comparison <- data.frame(
+  Model = c("Linear Model", "Linear + ARIMA Model"),
+  RSS   = c(rss_lm, rss_combined),
+  RMSE  = c(rmse_lm, rmse_combined)
+)
+
+# Display the table
+knitr::kable(model_comparison, digits = 4)
+
+# Predict data adter 2020
+pred_result <- predict(model1, newdata = data_test, interval = "prediction", level = 0.95)
+
+y_test_true <- data_test$Total_CO2_Emissions
+y_test_pred <- pred_result[, "fit"]
+y_test_lower <- pred_result[, "lwr"]
+y_test_upper <- pred_result[, "upr"]
+
+plot(data_test$Date, y_test_true, type = "l", col = "black", lwd = 2,
+     ylab = "Total CO2 Emissions (million metric tons)",
+     xlab = "Date",
+     cex.lab = 1.2, cex.main = 1.4)
+
+lines(data_test$Date, y_test_pred, col = "blue", lwd = 2)
+lines(data_test$Date, y_test_lower, col = "blue", lty = 2, lwd = 1.5)
+lines(data_test$Date, y_test_upper, col = "blue", lty = 2, lwd = 1.5)
+
+legend("topright",
+       legend = c("Observed", "Predicted", "95% Prediction Interval"),
+       col = c("black", "blue", "blue"),
+       lty = c(1, 1, 2),
+       lwd = 2,
+       cex = 1.1,
+       bty = "n")
+
+```
+
+### Python
+
+```{r project Py code}
+#| eval: false
+#| echo: true
+
+#### Python Code Part ####
+
+# load library
+import os
+import random
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import mean_squared_error
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense, Dropout
+from tensorflow.keras.callbacks import EarlyStopping
+
+# load data
+df = pd.read_csv("../Data/cleaned_data.csv")
+
+df['Date'] = pd.to_datetime(df['Year'].astype(str) + '-' + df['Month'].astype(str) + '-01')
+df = df.sort_values('Date')
+
+features = [
+    'Transportarion Petroleum Consumption',
+    'Total Fossil Fuels Production',
+    'Total Renewable Energy Production',
+    'Commercial_Consumption',
+    'Industrial_Consumption',
+    'Residential_Consumption',
+    'Month'
+]
+target = 'Total_CO2_Emissions'
+data_all = df[features + [target, 'Date']].dropna()
+
+# normalize the data
+feature_scaler = MinMaxScaler()
+target_scaler = MinMaxScaler()
+
+data_scaled = data_all.copy()
+data_scaled[features] = feature_scaler.fit_transform(data_all[features])
+data_scaled[[target]] = target_scaler.fit_transform(data_all[[target]])
+
+# Construct sliding window samples
+def make_sequences(data, seq_len=12):
+    X, y, dates = [], [], []
+    for i in range(len(data) - seq_len):
+        X.append(data.iloc[i:i+seq_len][features].values)
+        y.append(data.iloc[i+seq_len][target])
+        dates.append(data.iloc[i+seq_len]['Date'])
+    return np.array(X), np.array(y), np.array(dates)
+
+seq_len = 24
+X_all, y_all, dates_all = make_sequences(data_scaled, seq_len)
+
+# train validation test set split
+train_end = pd.Timestamp("2020-12-31")
+valid_end = pd.Timestamp("2021-12-31")
+
+train_idx = dates_all <= train_end
+valid_idx = (dates_all > train_end) & (dates_all <= valid_end)
+test_idx = dates_all > valid_end
+
+X_train, y_train = X_all[train_idx], y_all[train_idx]
+X_valid, y_valid = X_all[valid_idx], y_all[valid_idx]
+X_test, y_test = X_all[test_idx], y_all[test_idx]
+
+def set_seed(seed=42):
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    random.seed(seed)
+    np.random.seed(seed)
+    tf.random.set_seed(seed)
+    tf.config.experimental.enable_op_determinism()
+
+set_seed(42)
+
+# Construct the model
+model = Sequential([
+    LSTM(128, return_sequences=True, input_shape=(X_train.shape[1], X_train.shape[2])),
+    Dropout(0.3),
+    LSTM(64),
+    Dense(1)
+])
+model.compile(optimizer='adam', loss='mse')
+
+early_stop = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+
+history = model.fit(
+    X_train, y_train,
+    validation_data=(X_valid, y_valid),
+    epochs=100,
+    batch_size=16,
+    callbacks=[early_stop],
+    verbose=0
+)
+
+# loss function 
+plt.figure(figsize=(8, 5))
+plt.plot(history.history['loss'], label='Train Loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+plt.title("Loss Curve During Training")
+plt.xlabel("Epoch")
+plt.ylabel("MSE Loss")
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+
+os.makedirs("Charts", exist_ok=True)
+plt.savefig("Charts/loss_curve.png", dpi=300)
+plt.close()
+
+def predict_and_inverse(X, y, scaler):
+    y_pred = model.predict(X, verbose=0)
+    y_pred_inv = scaler.inverse_transform(y_pred.reshape(-1, 1))
+    y_true_inv = scaler.inverse_transform(y.reshape(-1, 1))
+    return y_true_inv, y_pred_inv
+
+y_train_inv, y_pred_train_inv = predict_and_inverse(X_train, y_train, target_scaler)
+y_valid_inv, y_pred_valid_inv = predict_and_inverse(X_valid, y_valid, target_scaler)
+y_test_inv,  y_pred_test_inv  = predict_and_inverse(X_test,  y_test,  target_scaler)
+
+# MSE evaluation for both training validation and prediction set
+def print_rmse(label, y_true, y_pred):
+    mse = mean_squared_error(y_true, y_pred)
+    rmse = np.sqrt(mse)
+    print(f"{label} MSE: {mse:.2f}, RMSE: {rmse:.2f}")
+    return rmse
+
+train_rmse = print_rmse("Train", y_train_inv, y_pred_train_inv)
+valid_rmse = print_rmse("Valid", y_valid_inv, y_pred_valid_inv)
+test_rmse  = print_rmse("Test",  y_test_inv,  y_pred_test_inv)
+
+# Prediction on Test dataset
+plt.figure(figsize=(10, 6))
+plt.plot(dates_all[test_idx], y_test_inv, label='True')
+plt.plot(dates_all[test_idx], y_pred_test_inv, label='Predicted')
+plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+plt.gca().xaxis.set_major_locator(mdates.YearLocator())
+plt.title('LSTM Forecast (2022 and beyond)')
+plt.xlabel("Year")
+plt.ylabel("Total CO₂ Emissions")
+plt.legend()
+plt.tight_layout()
+
+os.makedirs("Charts", exist_ok=True)
+plt.savefig("Charts/test_forecast.png", dpi=300)
+plt.close()
+
+```
 
 \newpage
 
