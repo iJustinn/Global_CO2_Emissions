@@ -51,6 +51,22 @@ The paper is structured as follows: @sec-method describes our data sources, prep
 
 
 
+# Literature Review {#sec-litrature}
+
+## Traditional Statistical Models
+
+Time series models like ARIMA and its seasonal version, SARIMA, have been frequently used to forecast CO₂ emissions because they effectively handle seasonal and linear patterns. For instance, ARIMA models have successfully forecasted emission trends in countries like China and South Africa, clearly showing the steady increase in emissions and helping inform policy decisions @citeTian2025. However, these models often struggle with unexpected changes, such as sudden policy shifts or economic shocks, since they assume the data follow predictable, linear patterns. Therefore, ARIMA alone might not fully capture complex real-world emission trends @citeTian2025.
+
+## Machine Learning and Deep Learning Models
+
+To overcome the limitations of traditional models, researchers have increasingly used deep learning methods, particularly LSTM and GRU neural networks. These approaches excel at capturing complex patterns and long-term relationships in emission data. A recent study forecasting India's CO₂ emissions demonstrated that an LSTM model performed better than traditional ARIMA and other statistical models, achieving significantly lower prediction errors @citeKumari2023. Similarly, a comparative study found deep learning models (like LSTM and GRU) consistently outperform statistical methods, especially when emissions data show irregular fluctuations or complex trends @citeAjala2025. These studies suggest that deep learning can greatly enhance forecasting accuracy.
+
+## Hybrid Models
+
+Recognizing the benefits of both traditional and deep learning methods, hybrid models have become popular. These models typically use ARIMA to capture straightforward seasonal and linear trends, while neural networks address more complex patterns. Zhang (2003) initially demonstrated the value of combining ARIMA and neural networks, showing improved accuracy over either model alone @citeZhang2003. Recently, hybrid models using ARIMA and LSTM have successfully forecasted China's CO₂ emissions, outperforming standalone models by capturing both regular seasonal cycles and unpredictable fluctuations @citeWen2023. Our paper adopts this hybrid approach, leveraging the strengths of ARIMA for simple patterns and LSTM for complex ones, building upon these prior successes to provide accurate forecasts of U.S. CO₂ emissions.
+
+
+
 # Method {#sec-method}
 
 ## Data
@@ -499,6 +515,8 @@ legend("topright",
 
 ```
 
+\newpage
+
 @fig-rss-rmse-comparison shows how well the combined Linear + ARIMA model predicts $CO_2$ emissions for the years 2021 to 2025. The black line represents the actual observed emissions, while the solid blue line shows the model’s predicted values, and the dashed blue lines indicate the 95% prediction interval. The predicted values follow the seasonal ups and downs of the observed data quite closely, staying mostly within the prediction bounds. This suggests that the model is effective at capturing both the trend and seasonal patterns in the data.
 
 
@@ -541,15 +559,17 @@ ggplot() +
 
 # Discussion {#sec-discussion}
 
+## Findings Conclusion
+
 Our research used both linear regression and ARIMA models to analyze and forecast monthly U.S. $CO_2$ emissions based on dominant sectors of greenhouse gas emissions. Our results show that while a linear regression model does explain much of the variation in emissions, the ACF and PACF plots of the residuals from the model suggest there is serial correlation of the errors. The linear model clearly does not account for the temporal structure of the data. Therefore, incorporating the time series structure into our model using an ARIMA model significantly improves on this aspect. Residuals are more likely to be independent, and our forecasts are more accurate due to the model accounting for factors like autocorrelation and seasonality. We discuss these differences below.
 
-## Implications of Linear Regression Model
+## Implications of Model
 
 Our linear model identified 6 key predictors, 5 of which are statistically significant, that drive total $CO_2$ emissions. Of the statistically significant predictors, transportation petroleum consumption exhibits a strong positive relationship with emissions, which is consistent with the industry’s carbon emission expectations. Furthermore, commercial and industrial energy consumption also have positive effects with significant p-values, with coefficients that align with their respective industry expectations. These results validate the inclusion of these sectors as relevant predictors for our model.
 
 However, fossil fuel production and renewable energy production both show large and statistically significant negative relationships with total emissions. The coefficient for renewable energy is approximately -256, which supports the idea that renewable energy greatly reduces emissions. The negative coefficient for fossil fuel production, which is approximately -38, seems counterintuitive, as it is generally understood that fossil fuel production directly releases many $CO_2$ emissions into the atmosphere. Assuming a linear model, the only explanations could be that increased fossil fuel production results in increased exports of further $CO_2$ emitting products, or the actual process of producing fossil fuels uses renewable energy, both of which are unlikely. Residential energy consumption exhibits a small, positive, but statistically insignificant relationship with emissions. This suggests that residential consumption has limited marginal contribution in total emissions, or that it could offset seasonal dynamics.
 
-## Implications
+## Other Implications
 
 Our results demonstrate the importance of incorporating temporal factors into environmental forecasting models, especially for time series data. Only relying on cross-sectional, linear regressors in our model fails to account for the strong autocorrelation and seasonality persistent in emissions data. Our results suggest that the hybrid approaches, where temporal factors are captured in the ARIMA model, are better suited for forecasting $CO_2$ emissions.
 
